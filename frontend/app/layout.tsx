@@ -28,10 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Memorial Cardiology AI Receptionist</title>
+        <title>Eye Medical Center AI Receptionist</title>
         <meta
           name="description"
-          content="Memorial Cardiology AI Receptionist"
+          content="Eye Medical Center AI Receptionist"
         />
       </head>
       <body

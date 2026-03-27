@@ -79,7 +79,7 @@ export function AppSidebar() {
                 <span className="truncate font-semibold">
                   {practice?.practice_name || "Practice Name"}
                 </span>
-                <span className="truncate text-xs">AI Receptionist</span>
+                <span className="truncate text-xs">EMC Receptionist</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
