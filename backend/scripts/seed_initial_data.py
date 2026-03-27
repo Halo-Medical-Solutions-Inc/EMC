@@ -13,7 +13,7 @@ from app.utils.password import hash_password
 
 
 PRACTICE_DATA = {
-    "practice_name": "EMC",
+    "practice_name": "Eye Medical Center of Fresno",
     "practice_region": "America/Los_Angeles",
     "max_concurrent_calls": 10,
 }

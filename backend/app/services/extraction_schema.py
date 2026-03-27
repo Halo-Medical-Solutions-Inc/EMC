@@ -1,7 +1,16 @@
 from typing import Any, Dict, List, Optional
 
 
-DEFAULT_PROVIDER_NAMES: List[str] = ["Dr. Mydili", "Other", "Not Provided"]
+DEFAULT_PROVIDER_NAMES: List[str] = [
+    "Dr. Bertolucci",
+    "Dr. Prescott",
+    "Dr. Thinda",
+    "Dr. Teasley",
+    "Dr. Mehta",
+    "Dr. Ghajar",
+    "Other",
+    "Not Provided",
+]
 
 PROVIDER_STAFF_DIRECTORY: List[Dict[str, Any]] = []
 

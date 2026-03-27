@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database.session import get_db
 from app.models.call import CallStatus
-from app.prompts import BASE_LILY_PROMPT, build_returning_caller_prompt
+from app.prompts import BASE_KAITLIN_PROMPT, build_returning_caller_prompt
 from app.services import (
     call_completion_service,
     call_service,
@@ -105,10 +105,9 @@ async def vapi_webhook(
 def _build_model_override(prompt: str) -> Dict[str, Any]:
     return {
         "provider": "openai",
-        "model": "gpt-4o",
+        "model": "gpt-5.2-chat-latest",
         "toolIds": [
-            "4c4a6648-8e26-41aa-a0b0-90aa9837cb4e",
-            "e3aa9d6e-ca76-4a95-8e2f-8501b44eb49c",
+            "6944005f-6e62-41c4-848b-393cbbaf2f34",
         ],
         "messages": [{"role": "system", "content": prompt}],
     }
@@ -118,7 +117,7 @@ async def _handle_assistant_request(
     db: AsyncSession, body: Dict[str, Any]
 ) -> Dict[str, Any]:
     overrides: Dict[str, Any] = {
-        "model": _build_model_override(BASE_LILY_PROMPT),
+        "model": _build_model_override(BASE_KAITLIN_PROMPT),
     }
 
     try:
@@ -134,9 +133,8 @@ async def _handle_assistant_request(
                 summary = (display_data or {}).get("summary", "")
                 prompt = build_returning_caller_prompt(summary)
                 overrides["firstMessage"] = (
-                    "Thank you for calling First Pediatrics. "
-                    "If this is a medical emergency, please hang up and call 911. "
-                    "Hi, welcome back — are you calling about the same thing as before, "
+                    "Hello, you've reached Eye Medical Center of Fresno. "
+                    "Welcome back — are you calling about the same thing as before, "
                     "or is this something new?"
                 )
                 overrides["model"] = _build_model_override(prompt)
@@ -195,18 +193,17 @@ def _get_current_time_result() -> str:
     time_str = now.strftime("%I:%M %p").lstrip("0")
 
     is_weekday = now.weekday() < 5
-    past_open = now.hour > 8 or (now.hour == 8 and now.minute >= 30)
-    is_business_hours = is_weekday and past_open and now.hour < 17
+    is_business_hours = is_weekday and 8 <= now.hour < 17
 
     if is_business_hours:
         status = "The clinic is currently OPEN."
-    elif is_weekday and not past_open:
-        status = "The clinic is currently CLOSED. It opens today at 8:30 AM PST."
+    elif is_weekday and now.hour < 8:
+        status = "The clinic is currently CLOSED. It opens today at 8:00 AM PST."
     elif is_weekday and now.hour >= 17:
         next_day = "Monday" if now.weekday() == 4 else "tomorrow"
-        status = f"The clinic is currently CLOSED. It opens next on {next_day} at 8:30 AM PST."
+        status = f"The clinic is currently CLOSED. It opens next on {next_day} at 8:00 AM PST."
     else:
-        status = "The clinic is currently CLOSED (weekend). It opens Monday at 8:30 AM PST."
+        status = "The clinic is currently CLOSED (weekend). It opens Monday at 8:00 AM PST."
 
     return f"{day_name}, {date_str}, {time_str} PST. {status}"
 

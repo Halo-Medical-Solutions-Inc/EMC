@@ -28,7 +28,14 @@ PHONE_NUMBER_LABELS: Dict[str, str] = {}
 
 
 async def _get_provider_names_list(db: AsyncSession) -> List[str]:
-    return ["Dr. Mydili"]
+    return [
+        "Dr. Bertolucci",
+        "Dr. Prescott",
+        "Dr. Thinda",
+        "Dr. Teasley",
+        "Dr. Mehta",
+        "Dr. Ghajar",
+    ]
 
 
 def _get_call_duration(vapi_data: Optional[Dict[str, Any]]) -> Optional[float]:

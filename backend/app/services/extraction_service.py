@@ -40,7 +40,16 @@ async def run_extraction(call_id: UUID) -> None:
             teams = await practice_service.get_teams(db)
             team_names = [t.title for t in teams] if teams else None
 
-            provider_names = ["Dr. Mydili", "Other", "Not Provided"]
+            provider_names = [
+                "Dr. Bertolucci",
+                "Dr. Prescott",
+                "Dr. Thinda",
+                "Dr. Teasley",
+                "Dr. Mehta",
+                "Dr. Ghajar",
+                "Other",
+                "Not Provided",
+            ]
 
             staff_extension_map = build_staff_extension_map(
                 PROVIDER_STAFF_DIRECTORY,
