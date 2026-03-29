@@ -244,7 +244,7 @@ function AcceptInvitationContent() {
                 Accept invitation
               </h1>
               <p className="text-[14px] text-neutral-500">
-                Create your account to join Eye Medical Center AI Receptionist
+                Create your account to join Eye Medical Center of Fresno
               </p>
             </div>
 

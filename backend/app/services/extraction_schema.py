@@ -180,7 +180,12 @@ def build_extraction_schema(
             "A call can belong to multiple teams. "
             "Select all that apply based on the call content, provider, and context. "
             "Infer the best match from available teams even when transcript has errors. "
-            f"Available teams: {team_names_str}."
+            f"Available teams: {team_names_str}. "
+            "Provider-to-team mapping: "
+            "Dr. Bertolucci, Dr. Prescott, Dr. Thinda, Dr. Teasley, and Dr. Mehta are all Retina team providers. "
+            "Dr. Ghajar belongs to the Dr. Ghajar team (includes LASIK, cross-linking, and corneal refractive surgery). "
+            "Use 'Other' only when the call does not involve any of the above providers "
+            "(e.g. billing-only, general info, unknown provider, spam, or providers outside these six)."
         )
         if staff_extension_map:
             teams_description += (

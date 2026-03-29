@@ -80,7 +80,7 @@ function LoginContent() {
                 Welcome back
               </h1>
               <p className="text-[14px] text-neutral-500">
-                Sign in to Eye Medical Center AI Receptionist
+                Sign in to Eye Medical Center of Fresno
               </p>
             </div>
 
