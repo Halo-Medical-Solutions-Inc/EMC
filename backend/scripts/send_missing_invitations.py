@@ -13,10 +13,9 @@ from app.services.invitation_service import create_invitation, get_pending_invit
 from app.services.user_service import get_user_by_email
 
 
-# Missing emails that need invitations
-MISSING_EMAILS = [
-    "brefabretti@lvneuro.com",  # Bre Fabretti - Jennifer Walsh team
-    "jonetta@lvneuro.com",      # Jonetta Brown - Dr. Nathan Harris/Dr. Sheikh/Dr. Figueroa team
+# Missing emails that need invitations — update with actual addresses before running
+MISSING_EMAILS: list[str] = [
+    # Add EMC staff emails here before running this script
 ]
 
 

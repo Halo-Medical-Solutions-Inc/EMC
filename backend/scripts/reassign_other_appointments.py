@@ -11,12 +11,8 @@ from app.models.call import Call
 from app.services import call_service
 
 DOCTOR_TEAMS = [
-    "George Nasr",
-    "Henry Van Gieson",
-    "Mark Young Lee",
-    "Natasha Cuk",
-    "Ron Sklash",
-    "Winfried Waider",
+    "Retina",
+    "Dr. Ghajar",
 ]
 
 

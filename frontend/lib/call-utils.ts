@@ -249,18 +249,18 @@ interface VapiDataWithMessages {
 }
 
 const EXTENSION_LABELS: Record<string, string> = {
-  "156": "Botox General",
-  "252": "Botox Escalations",
-  "112": "Referrals & Authorizations",
-  "133": "Live Support – Upset Caller",
-  "406": "Legal & Liens",
-  "205": "Medical Records",
-  "801": "Main Line",
+  "1000": "Scheduling (English)",
+  "1002": "Scheduling (Spanish)",
+  "3020": "Dr. Ghajar Surgery Scheduler",
+  "5976": "Dr. Ghajar's Office",
+  "5040": "Retina Department",
 };
 
 const PHONE_NUMBER_LABELS: Record<string, string> = {
-  "5629882995": "Jean",
-  "15629882995": "Jean",
+  "5598783024": "Referrals",
+  "15598783024": "Referrals",
+  "5594495024": "Billing",
+  "15594495024": "Billing",
 };
 
 export function extractTransferInfo(vapiData: unknown): TransferInfo {

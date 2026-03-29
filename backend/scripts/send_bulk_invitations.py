@@ -12,69 +12,9 @@ from app.models.invitation import Invitation
 from app.models.user import User, UserRole
 from app.services import invitation_service
 
-# All staff emails extracted from the spreadsheet
-STAFF_EMAILS = [
-    # Dr. Janda team
-    "michelegalicia@lvneuro.com",
-    "greciacortezgonzalez@lvneuro.com",
-    
-    # Dr. Mahajan team
-    "amymorris@lvneuro.com",
-    "vanessamontano@lvneuro.com",
-    
-    # Dr. Balsiger team
-    "rosario@lvneuro.com",
-    
-    # Dr. Vickers team
-    "samanthagonzalez@lvneuro.com",
-    "mayfairarcaina@lvneuro.com",
-    "abigailroque@lvneuro.com",
-    
-    # Dr. Zhang team
-    "dayamiramirez@lvneuro.com",
-    "leticiabravovenancia@lvneuro.com",
-    
-    # Dr. Campbell MA team
-    "evelynrodriguez@lvneuro.com",
-    # greciacortezgonzalez@lvneuro.com - duplicate, already listed above
-    "starlenecanon@lvneuro.com",
-    
-    # Jennifer Walsh team
-    "alexusalexander@lvneuro.com",
-    
-    # Andy Volin team
-    "marthaquinto@lvneuro.com",
-    "dayanamondragon@lvneuro.com",
-    
-    # Bernadette MA team
-    "elizabethsordahl@lvneuro.com",
-    "kenyaperez@lvneuro.com",
-    
-    # Celestina Aguilar team
-    "carissalucas@lvneuro.com",
-    "perlamier@lvneuro.com",
-    
-    # Mary Anne Cardenas team
-    "yamiletchavez@lvneuro.com",
-    
-    # Mira Janine Henson team
-    "elvizaortega@lvneuro.com",
-    
-    # Bernard Bungubung team
-    "reynavivarsoria@lvneuro.com",
-    "nevaehhenderson@lvneuro.com",
-    
-    # Iris Malig team
-    "julianamartinez@lvneuro.com",
-    "marthahernandez@lvneuro.com",
-    
-    # Kristian Cabanit team
-    "mayarutherford@lvneuro.com",
-    "priscilatorres@lvneuro.com",
-    
-    # Wayne Sears team
-    "samaramartinez@lvneuro.com",
-    "nidiamacias@lvneuro.com",
+# EMC staff emails — update with actual addresses before running
+STAFF_EMAILS: list[str] = [
+    # Add EMC staff emails here before running this script
 ]
 
 
@@ -153,7 +93,7 @@ async def send_invitations(db) -> None:
 
 async def main() -> None:
     print("=" * 60)
-    print("Sending bulk invitations to LV Neuro staff")
+    print("Sending bulk invitations to EMC staff")
     print("=" * 60)
     print(f"Total emails to process: {len(STAFF_EMAILS)}")
     print("-" * 60)

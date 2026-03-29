@@ -254,7 +254,7 @@ function AcceptInvitationContent() {
                   Email
                 </span>
                 <span className="text-[13px] font-medium text-neutral-900">
-                  {verificationStatus?.email || "example@lvneurology.com"}
+                  {verificationStatus?.email || "example@emcfresno.com"}
                 </span>
               </div>
               <div className="flex items-center justify-between">

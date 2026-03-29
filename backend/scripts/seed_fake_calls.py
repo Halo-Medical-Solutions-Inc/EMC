@@ -15,21 +15,12 @@ from app.utils.encryption import encrypt_for_storage
 
 
 PROVIDERS = [
-    "Dr. Paul H. Janda",
-    "Dr. Jay Mahajan",
-    "Dr. Robert Balsiger",
-    "Dr. Aroucha Vickers",
-    "Dr. Steven Fan Zhang",
-    "Dr. Taylor Campbell",
-    "Dr. Lisa Conners",
-    "Dr. Garet Zaugg",
-    "Dr. Duncan Gilmour",
-    "Dr. Michael Dang",
-    "Dr. Azin Azma",
-    "Dr. Jasmine Chopra",
-    "Dr. Krupesh Bhatka",
-    "Dr. Faisal Choudhury",
-    "Dr. Aleksandra Ferreira",
+    "Dr. Bertolucci",
+    "Dr. Prescott",
+    "Dr. Thinda",
+    "Dr. Teasley",
+    "Dr. Mehta",
+    "Dr. Ghajar",
     "Other",
     "Not Provided",
 ]
@@ -171,100 +162,100 @@ LAST_NAMES = [
     "Galvan", "Galloway", "Galvan", "Galloway", "Galvan", "Galloway", "Galvan", "Galloway",
 ]
 
-PHONE_AREA_CODES = ["702", "725", "702", "725", "702", "725", "702", "725", "702", "725"]
+PHONE_AREA_CODES = ["559", "559", "559", "559", "559", "559", "559", "559", "559", "559"]
 
 TRANSCRIPT_TEMPLATES = {
     "Appointment (New/Reschedule/Cancel)": [
-        "AI: Thank you for calling Memorial Cardiology. How can I help you today?\nUser: Hi, I need to schedule an appointment with {provider}.\nAI: I'd be happy to help you schedule an appointment. Can I get your name and date of birth?\nUser: My name is {caller_name} and my DOB is {patient_dob}.\nAI: Thank you. What's the reason for your visit?\nUser: I've been having headaches and my primary care doctor recommended I see a neurologist.\nAI: I understand. Let me check availability. Would you prefer morning or afternoon?\nUser: Morning would be best.\nAI: I have availability next Tuesday at 10 AM. Does that work for you?\nUser: Yes, that works perfectly.\nAI: Great, I've scheduled your appointment for {date} at 10 AM with {provider}. You'll receive a confirmation text shortly.",
-        "AI: Memorial Cardiology, how can I assist you?\nUser: I need to reschedule my appointment.\nAI: I can help with that. Can I get your name?\nUser: {caller_name}.\nAI: I see your appointment is scheduled for {date}. What date would work better for you?\nUser: Can we move it to next week?\nAI: Absolutely. I have availability next Thursday at 2 PM. Would that work?\nUser: Yes, that's perfect.\nAI: Your appointment has been rescheduled to next Thursday at 2 PM. You'll receive a confirmation shortly.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: Hi, I need to schedule an appointment with {provider}.\nAI: Of course — let me get some details so the team can get that set up for you. Can I get your name?\nUser: {caller_name}.\nAI: Got it. And what's your date of birth?\nUser: {patient_dob}.\nAI: Okay. Do you have a date that was offered to you for your appointment?\nUser: They mentioned {date}.\nAI: Alright, I've got everything noted. Someone from the team will reach out to confirm your appointment. Is the number you're calling from the best one to reach you at?\nUser: Yes, that's fine.\nAI: Sounds good. We'll be in touch. Thank you, {caller_name}.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: I need to reschedule my appointment with {provider}.\nAI: Of course. Can I get your name?\nUser: {caller_name}.\nAI: And your date of birth?\nUser: {patient_dob}.\nAI: Got it. I'll note that you need to reschedule. Someone from the team will reach out to get that set up for you. Is the number you're calling from the best one to reach you?\nUser: Yes.\nAI: Alright, we'll be in touch. Thank you, {caller_name}.",
     ],
     "Prescription Refill": [
-        "AI: Thank you for calling Memorial Cardiology. How can I help you?\nUser: I need a refill on my medication.\nAI: I can help with that. Can I get your name and date of birth?\nUser: {caller_name}, DOB {patient_dob}.\nAI: Thank you. Which medication do you need refilled?\nUser: I need a refill on my Topamax prescription.\nAI: I'll send a refill request to {provider}. Is this for the same pharmacy?\nUser: Yes, CVS on Main Street.\nAI: Perfect. The refill request has been sent. It should be ready in 2-3 business days.\nUser: Thank you so much.\nAI: You're welcome. Is there anything else I can help you with?\nUser: No, that's all. Thank you.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: I need a refill on my eye drops.\nAI: Of course — which medication do you need refilled?\nUser: My prednisolone drops.\nAI: Got it. Which pharmacy do you use?\nUser: CVS on Herndon.\nAI: And which doctor is the prescription through?\nUser: {provider}.\nAI: Okay. Can I get your name?\nUser: {caller_name}.\nAI: And your date of birth?\nUser: {patient_dob}.\nAI: Alright, I've got everything noted. Someone from the team will take care of this and get back to you. Is the number you're calling from the best one to reach you?\nUser: Yes.\nAI: Sounds good. We'll be in touch. Thank you, {caller_name}.",
     ],
     "Test Results": [
-        "AI: Memorial Cardiology, how can I help you?\nUser: I'm calling about my test results.\nAI: I can help with that. Can I get your name and date of birth?\nUser: {caller_name}, DOB {patient_dob}.\nAI: Thank you. Which test are you calling about?\nUser: I had an MRI done last week.\nAI: I see your MRI results are in. {provider} has reviewed them and they look normal. Would you like to schedule a follow-up appointment to discuss?\nUser: Yes, please.\nAI: I have availability next week. Would Wednesday at 3 PM work?\nUser: That works for me.\nAI: Great, I've scheduled your follow-up for Wednesday at 3 PM.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: I'm calling about my OCT results.\nAI: Of course. Can I get your name?\nUser: {caller_name}.\nAI: And your date of birth?\nUser: {patient_dob}.\nAI: Which provider do you see here?\nUser: {provider}.\nAI: Got it. I'll note that you're asking about your OCT results. Someone from the team will reach out with an update. Is the number you're calling from the best one to reach you?\nUser: Yes.\nAI: Alright, we'll be in touch. Thank you, {caller_name}.",
     ],
     "Report Symptoms": [
-        "AI: Thank you for calling Memorial Cardiology. How can I assist you?\nUser: I'm experiencing some concerning symptoms.\nAI: I'm sorry to hear that. Can you tell me what symptoms you're experiencing?\nUser: I've been having severe headaches and some vision changes.\nAI: I understand this is concerning. Can I get your name and date of birth?\nUser: {caller_name}, DOB {patient_dob}.\nAI: Thank you. How long have you been experiencing these symptoms?\nUser: About a week now.\nAI: I'll note this for {provider}. Given the severity, I'd recommend scheduling an appointment as soon as possible. I have availability tomorrow at 2 PM.\nUser: Yes, please schedule that.\nAI: I've scheduled your appointment for tomorrow at 2 PM. If your symptoms worsen, please go to the emergency room.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: I'm having some discomfort in my eye after my injection.\nAI: Oh, I'm sorry to hear that. Can I get your name?\nUser: {caller_name}.\nAI: What's your date of birth?\nUser: {patient_dob}.\nAI: Which provider do you see here?\nUser: {provider}.\nAI: Were you recently injected, or have you had surgery?\nUser: I had an injection a couple days ago.\nAI: How long have you been having the discomfort?\nUser: Since yesterday.\nAI: Which eye is affected?\nUser: My right eye.\nAI: Okay. Have you tried anything for it, like artificial tears?\nUser: No, not yet.\nAI: Okay, I've got all of that noted. Someone from the team will reach out to you as soon as possible. Is the number you're calling from the best one to reach you?\nUser: Yes.\nAI: Sounds good. We'll be in touch. Thank you, {caller_name}.",
     ],
     "Billing/Insurance Question": [
-        "AI: Memorial Cardiology, how can I help you?\nUser: I have a question about my bill.\nAI: I can help with billing questions. Can I get your name?\nUser: {caller_name}.\nAI: Thank you. What's your question?\nUser: I received a bill but I thought my insurance would cover it.\nAI: Let me check your account. I see you have Blue Cross Blue Shield. The claim was submitted but it looks like there's a deductible that needs to be met first.\nUser: Oh, I see. How much is the balance?\nAI: Your balance is $150. Would you like to set up a payment plan?\nUser: Yes, please.\nAI: I can set up a payment plan of $50 per month for 3 months. Does that work?\nUser: Yes, that's perfect. Thank you.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: I have a question about my bill.\nAI: Sure — let me get you over to our billing department right now. One moment.\nUser: Thank you.",
     ],
     "Medical Records": [
-        "AI: Thank you for calling Memorial Cardiology. How can I assist you?\nUser: I need to request my medical records.\nAI: I can help with that. Can I get your name and date of birth?\nUser: {caller_name}, DOB {patient_dob}.\nAI: Thank you. Where would you like the records sent?\nUser: Can you send them to my new doctor's office?\nAI: Absolutely. What's the name and address of the office?\nUser: Dr. Smith's office at 123 Main Street, Las Vegas.\nAI: I'll send a records request. It typically takes 7-10 business days. Is there a specific date you need them by?\nUser: No, that's fine. Thank you.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: I need to request my medical records.\nAI: Of course. Can I get your name and date of birth?\nUser: {caller_name}, DOB {patient_dob}.\nAI: And where would you like the records sent?\nUser: To my new doctor's office on Shaw Avenue in Fresno.\nAI: Got it. I'll note that for the team. Someone will reach out to follow up. Is the number you're calling from the best one to reach you?\nUser: Yes.\nAI: Alright, we'll be in touch. Thank you, {caller_name}.",
     ],
     "Referral Request": [
-        "AI: Memorial Cardiology, how can I help you?\nUser: I need a referral to see a specialist.\nAI: I can help with that. Can I get your name?\nUser: {caller_name}.\nAI: Thank you. What type of specialist do you need to see?\nUser: I need to see a neurosurgeon.\nAI: I'll send a referral request to {provider}. What's the reason for the referral?\nUser: My primary care doctor recommended it based on my MRI results.\nAI: I'll process the referral request. You should hear back within 3-5 business days.\nUser: Thank you so much.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: I'm calling about a referral.\nAI: Of course — is this about a referral coming into Eye Medical Center from another practice, or about a referral that was sent out from our office?\nUser: It was sent out from your office.\nAI: Got it. Can I get your name?\nUser: {caller_name}.\nAI: And your date of birth?\nUser: {patient_dob}.\nAI: Which provider do you see here?\nUser: {provider}.\nAI: Do you know where the referral was sent?\nUser: I think it was to a glaucoma specialist.\nAI: Alright, I've got everything noted. Someone from the team will reach out with an update. Is the number you're calling from the best one to reach you?\nUser: Yes.\nAI: Sounds good. We'll be in touch. Thank you, {caller_name}.",
     ],
     "Prior Authorization": [
-        "AI: Memorial Cardiology, how can I assist you?\nUser: I need a prior authorization for a procedure.\nAI: I can help with that. Can I get your name?\nUser: {caller_name}.\nAI: Thank you. What procedure needs authorization?\nUser: I need authorization for a Botox injection.\nAI: I'll submit a prior authorization request to your insurance. This typically takes 7-14 business days.\nUser: Okay, thank you.\nAI: You're welcome. We'll call you once we receive approval.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: I need a prior authorization for my injection.\nAI: Of course. Can I get your name?\nUser: {caller_name}.\nAI: And your date of birth?\nUser: {patient_dob}.\nAI: Which provider do you see here?\nUser: {provider}.\nAI: Got it. I'll note that you need a prior auth for your injection. Someone from the team will follow up. Is the number you're calling from the best one to reach you?\nUser: Yes.\nAI: Alright, we'll be in touch. Thank you, {caller_name}.",
     ],
     "Speak to Staff": [
-        "AI: Thank you for calling Memorial Cardiology. How can I help you?\nUser: I need to speak with someone in the office.\nAI: I can help you with that. What do you need assistance with?\nUser: I have a question about my appointment.\nAI: I can help answer questions about appointments. What's your question?\nUser: I want to confirm my appointment time.\nAI: Can I get your name?\nUser: {caller_name}.\nAI: I see your appointment is scheduled for {date} at 10 AM with {provider}.\nUser: Perfect, thank you.\nAI: You're welcome. Is there anything else?\nUser: No, that's all.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: I need to speak with someone about my appointment.\nAI: I can take down your info and make sure someone from the team reaches out. Can I get your name?\nUser: {caller_name}.\nAI: And which provider do you see here?\nUser: {provider}.\nAI: Got it. What's the question about your appointment?\nUser: I just want to confirm the time.\nAI: I'll note that. Someone will call you back to confirm. Is the number you're calling from the best one to reach you?\nUser: Yes.\nAI: Sounds good. We'll be in touch. Thank you, {caller_name}.",
     ],
     "Spam/Wrong Number": [
-        "AI: Thank you for calling Memorial Cardiology. How can I help you?\nUser: Is this Pizza Hut?\nAI: No, this is Memorial Cardiology. I think you may have dialed the wrong number.\nUser: Oh, sorry about that.\nAI: No problem. Have a good day.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: Oh, sorry, I think I have the wrong number.\nAI: No problem at all. Have a good day!",
     ],
     "Other": [
-        "AI: Memorial Cardiology, how can I assist you?\nUser: I have a general question.\nAI: I'm happy to help. What's your question?\nUser: What are your office hours?\nAI: Our office hours are Monday through Friday, 8 AM to 5 PM.\nUser: Thank you.\nAI: You're welcome. Is there anything else?\nUser: No, that's all.",
+        "AI: Hello, you've reached Eye Medical Center of Fresno. This is Kaitlin. How can I help you?\nUser: I have a quick question — what are your office hours?\nAI: We're open Monday through Friday, 8 AM to 5 PM.\nUser: Thank you.\nAI: You're welcome. Is there anything else I can help with?\nUser: No, that's all. Thanks!",
     ],
 }
 
 SUMMARY_TEMPLATES = {
     "Appointment (New/Reschedule/Cancel)": [
-        "Pt {caller_name} scheduled appt with {provider} for {date}",
-        "Pt {caller_name} rescheduled appt to {date}",
-        "Pt {caller_name} cancelled appt",
+        "{caller_name} called to schedule a retina appointment with {provider} for {date}. Team will follow up to confirm.",
+        "{caller_name} called to reschedule appointment with {provider}. Team will follow up with new date.",
+        "{caller_name} called to cancel appointment with {provider}.",
     ],
     "Prescription Refill": [
-        "Pt {caller_name} requested refill for Topamax",
-        "Pt {caller_name} needs refill for Keppra",
-        "Pt {caller_name} requested refill for Gabapentin",
+        "{caller_name} called to request a refill of prednisolone drops through {provider}. Sent to CVS on Herndon.",
+        "{caller_name} called to request a refill of artificial tears through {provider}.",
+        "{caller_name} called to request a refill of eye drops through {provider}. Team will follow up.",
     ],
     "Test Results": [
-        "Pt {caller_name} calling about MRI results - normal",
-        "Pt {caller_name} asking about EEG results",
-        "Pt {caller_name} requesting test results",
+        "{caller_name} called asking about OCT results from {provider}. Team will follow up.",
+        "{caller_name} called asking about visual field test results from {provider}.",
+        "{caller_name} called requesting test results from {provider}.",
     ],
     "Report Symptoms": [
-        "Pt {caller_name} reporting headaches and vision changes - urgent appt scheduled",
-        "Pt {caller_name} reporting new symptoms",
-        "Pt {caller_name} calling about concerning symptoms",
+        "{caller_name} called reporting right eye discomfort after injection with {provider}. Mild, one day. Team will follow up.",
+        "{caller_name} called reporting post-injection soreness with {provider}. Team will follow up.",
+        "{caller_name} called reporting eye irritation. Sees {provider}. Team will follow up.",
     ],
     "Billing/Insurance Question": [
-        "Pt {caller_name} has billing question - $150 balance, payment plan set up",
-        "Pt {caller_name} insurance question",
-        "Pt {caller_name} calling about bill",
+        "{caller_name} called with a billing question. Transferred to billing department.",
+        "{caller_name} called about insurance coverage. Transferred to billing.",
+        "{caller_name} called about a statement. Transferred to billing.",
     ],
     "Medical Records": [
-        "Pt {caller_name} requesting medical records to be sent",
-        "Pt {caller_name} needs records sent to new provider",
-        "Pt {caller_name} requesting records",
+        "{caller_name} called requesting medical records be sent to another provider in Fresno.",
+        "{caller_name} called requesting records from {provider}.",
+        "{caller_name} called requesting medical records.",
     ],
     "Referral Request": [
-        "Pt {caller_name} needs referral to neurosurgeon",
-        "Pt {caller_name} requesting referral",
-        "Pt {caller_name} needs specialist referral",
+        "{caller_name} called checking on outgoing referral status from {provider} to a glaucoma specialist.",
+        "{caller_name} called about a referral from {provider}. Team will follow up.",
+        "{caller_name} called about referral status. Sees {provider}.",
     ],
     "Prior Authorization": [
-        "Pt {caller_name} needs prior auth for Botox injection",
-        "Pt {caller_name} requesting prior authorization",
-        "Pt {caller_name} needs auth for procedure",
+        "{caller_name} called needing prior auth for injection with {provider}. Team will follow up.",
+        "{caller_name} called requesting prior authorization for procedure with {provider}.",
+        "{caller_name} called about prior auth status with {provider}.",
     ],
     "Speak to Staff": [
-        "Pt {caller_name} wants to confirm appt time",
-        "Pt {caller_name} calling with general question",
-        "Pt {caller_name} needs to speak with staff",
+        "{caller_name} called wanting to confirm appointment time with {provider}. Team will call back.",
+        "{caller_name} called with a question for {provider}'s team.",
+        "{caller_name} called needing to speak with staff about {provider}.",
     ],
     "Spam/Wrong Number": [
-        "Wrong number - caller looking for Pizza Hut",
-        "Spam call",
-        "Wrong number",
+        "Wrong number — caller dialed incorrectly.",
+        "Spam call — no patient interaction.",
+        "Wrong number.",
     ],
     "Other": [
-        "Pt {caller_name} asking about office hours",
-        "Pt {caller_name} general question",
-        "Pt {caller_name} calling with question",
+        "{caller_name} called asking about office hours. Answered directly.",
+        "{caller_name} called with a general question about the practice.",
+        "{caller_name} called asking for the address.",
     ],
 }
 
@@ -356,7 +347,7 @@ async def seed_fake_calls(db, num_calls: int = 100) -> None:
             },
             "artifact": {
                 "transcript": transcript,
-                "recordingUrl": f"https://example.com/recordings/call_{i}.mp3",
+                "recordingUrl": f"https://storage.vapi.ai/recordings/fake_call_{i}.mp3",
             },
             "durationSeconds": duration_seconds,
         }

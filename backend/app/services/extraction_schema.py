@@ -37,14 +37,11 @@ def build_staff_extension_map(
     )
     for dept in department_directory:
         lines.append(f"  Ext {dept['ext']}: {dept['contact']} ({dept['department']})")
-    lines.append(
-        "Shared staff/extensions: "
-        "Daisy (ext 223) is secretary for both Dr. Waider, Winfried "
-        "and Dr. Nasr, George — select the most relevant provider based on call context. "
-        "Ext 260 is shared by Cathy (Dr. Sklash, Ron's secretary) and "
-        "Maryann (Authorizations) — use call context to determine intent. "
-        "Cathy also appears as Medical Records contact at ext 264."
-    )
+    if provider_directory or department_directory:
+        lines.append(
+            "If a caller mentions a staff member by name or extension, "
+            "match to the most relevant provider based on call context."
+        )
     return "\n".join(lines)
 
 
@@ -63,7 +60,7 @@ def build_extraction_schema(
     provider_description = (
         "Provider the caller is asking for. "
         "Match to the closest option in the enum even when the transcript has "
-        "typos or misheard names (e.g. 'Slash' or 'Doctor Slash' → Ron Sklash)."
+        "typos or misheard names (e.g. 'Gajar' or 'Doctor Gahar' → Dr. Ghajar)."
     )
     if staff_extension_map:
         provider_description += f" {staff_extension_map}"
@@ -130,15 +127,16 @@ def build_extraction_schema(
             "type": "string",
             "description": (
                 "Urgency level of the call. "
-                "Low: routine scheduling, well-child visits, immunizations, "
-                "school physicals, prescription refills, billing questions, "
-                "medical records requests, general inquiries. "
-                "Medium: test results, referrals, non-urgent medical questions, "
-                "prenatal consultations. "
-                "High: sick child with concerning symptoms, high fever in infant, "
-                "difficulty breathing, severe allergic reaction, "
-                "urgent callback requests, "
-                "anything requiring same-day or immediate attention."
+                "Low: routine appointment scheduling, prescription refills, "
+                "billing questions, medical records requests, general inquiries, "
+                "LASIK information, outgoing referral status checks. "
+                "Medium: non-urgent symptom reports (e.g. mild discomfort, blurry vision, "
+                "redness, dryness), medication questions, incoming referral status, "
+                "appointment changes, test results. "
+                "High: transfer-triggering symptoms (floaters/flashes, curtain or cobwebs "
+                "in vision, signs of infection, suture concerns, extreme or unusual pain), "
+                "ER/urgent care/discharge follow-ups, calls from outside practices or hospitals, "
+                "severely escalated callers, or anything requiring same-day or immediate attention."
             ),
             "enum": [
                 "Low",
@@ -192,8 +190,7 @@ def build_extraction_schema(
                 " When the caller mentions a staff name or extension number, "
                 "use the staff extension directory (from the provider_name field) "
                 "to identify the associated provider(s) and assign the call to "
-                "their team(s). For shared staff (e.g. Daisy serves both "
-                "Dr. Waider and Dr. Nasr), assign to all applicable teams."
+                "their team(s)."
             )
         fields.append(
             {
