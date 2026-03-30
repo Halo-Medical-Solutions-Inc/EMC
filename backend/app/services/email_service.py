@@ -64,7 +64,7 @@ If you didn't request a password reset, you can safely ignore this email.
 async def send_invitation_email(email: str, token: str, role: str) -> None:
     invitation_link = f"{settings.FRONTEND_URL}/accept-invitation?token={token}"
 
-    subject = f"You've been invited to {settings.FROM_NAME}"
+    subject = f"You've been invited to the Halo platform for {settings.FROM_NAME}"
 
     html_content = f"""
     <html>
@@ -72,7 +72,7 @@ async def send_invitation_email(email: str, token: str, role: str) -> None:
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                 <h2 style="color: #2563eb;">You've been invited!</h2>
                 <p>Hello,</p>
-                <p>You have been invited to join {settings.FROM_NAME} as a <strong>{role}</strong>.</p>
+                <p>You have been invited to join the Halo platform for {settings.FROM_NAME} as a <strong>{role}</strong>.</p>
                 <p>Click the button below to accept your invitation and create your account:</p>
                 <div style="margin: 30px 0;">
                     <a href="{invitation_link}" 
@@ -101,7 +101,7 @@ You've been invited to {settings.FROM_NAME}
 
 Hello,
 
-You have been invited to join {settings.FROM_NAME} as a {role}.
+You have been invited to join the Halo platform for {settings.FROM_NAME} as a {role}.
 
 Click the link below to accept your invitation and create your account:
 {invitation_link}
