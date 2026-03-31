@@ -252,11 +252,13 @@ const EXTENSION_LABELS: Record<string, string> = {
   "1000": "Scheduling (English)",
   "1002": "Scheduling (Spanish)",
   "3020": "Dr. Ghajar Surgery Scheduler",
-  "5976": "Dr. Ghajar's Office",
-  "5040": "Retina Department",
 };
 
 const PHONE_NUMBER_LABELS: Record<string, string> = {
+  "5594495046": "Dr. Ghajar's Office",
+  "15594495046": "Dr. Ghajar's Office",
+  "5594761742": "Retina Department",
+  "15594761742": "Retina Department",
   "5598783024": "Referrals",
   "15598783024": "Referrals",
   "5594495024": "Billing",

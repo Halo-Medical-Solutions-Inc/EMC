@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { setTokens } from "@/store/slices/auth-slice";
+import { setTokens, getCurrentUser } from "@/store/slices/auth-slice";
 import { useAppDispatch } from "@/store";
 import { InvitationVerifyResponse } from "@/types/api";
 
@@ -126,6 +126,7 @@ function AcceptInvitationContent() {
             refreshToken: data.data.refresh_token,
           })
         );
+        await dispatch(getCurrentUser()).unwrap();
         toast.success("Welcome to the team!");
         router.push("/dashboard");
       } else {
