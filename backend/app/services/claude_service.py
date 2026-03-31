@@ -50,7 +50,7 @@ The following JSON schema defines the fields you must extract from this call:
 6. If a value cannot be determined from the call, use null
 7. Be accurate - only extract information that is clearly present in the transcript
 
-**Handling transcription errors:** Call transcripts often contain typos, misheard names, or phonetic spellings produced by the speech-to-text transcriber. Apply the following corrections:
+**Handling transcription errors:** Call transcripts often contain typos, misheard names, or phonetic spellings produced by the speech-to-text transcriber. The practice name is **Eye Medical Center of Fresno** — always use this exact name in the summary and all fields, never a transcription variant like "iMedical," "I Medical Center," or similar. Apply the following corrections:
 
 - **Provider and team names:** When the transcript mentions a provider or team that is close to an option in the provided lists — similar sounding, phonetically alike, or a clear misspelling (e.g. "Doctor Gahar" → "Dr. Ghajar") — select the matching option. Do not use the transcribed text verbatim when a correct option exists. For provider_name: match to the closest provider in the enum. For call_teams: infer the best team(s) based on provider, context, and available teams. In the summary, always use the correct provider/team names from the schema, not the raw transcript.
 

@@ -120,26 +120,29 @@ async def _handle_assistant_request(
         "model": _build_model_override(BASE_KAITLIN_PROMPT),
     }
 
-    try:
-        call_data = body.get("message", {}).get("call", {})
-        caller_phone = call_data.get("customer", {}).get("number", "")
-
-        if caller_phone:
-            previous_calls = await call_service.find_completed_calls_by_number(
-                db, caller_phone
-            )
-            if previous_calls:
-                display_data = call_service.decrypt_display_data(previous_calls[0])
-                summary = (display_data or {}).get("summary", "")
-                prompt = build_returning_caller_prompt(summary)
-                overrides["firstMessage"] = (
-                    "Hello, you've reached Eye Medical Center of Fresno. "
-                    "Welcome back — are you calling about the same thing as before, "
-                    "or is this something new?"
-                )
-                overrides["model"] = _build_model_override(prompt)
-    except Exception as e:
-        print(f"Error in assistant-request lookup: {e}")
+    # NOTE: Returning-caller detection is temporarily disabled.
+    # To re-enable, uncomment the block below.
+    #
+    # try:
+    #     call_data = body.get("message", {}).get("call", {})
+    #     caller_phone = call_data.get("customer", {}).get("number", "")
+    #
+    #     if caller_phone:
+    #         previous_calls = await call_service.find_completed_calls_by_number(
+    #             db, caller_phone
+    #         )
+    #         if previous_calls:
+    #             display_data = call_service.decrypt_display_data(previous_calls[0])
+    #             summary = (display_data or {}).get("summary", "")
+    #             prompt = build_returning_caller_prompt(summary)
+    #             overrides["firstMessage"] = (
+    #                 "Hello, you've reached Eye Medical Center of Fresno. "
+    #                 "Welcome back — are you calling about the same thing as before, "
+    #                 "or is this something new?"
+    #             )
+    #             overrides["model"] = _build_model_override(prompt)
+    # except Exception as e:
+    #     print(f"Error in assistant-request lookup: {e}")
 
     return {
         "assistantId": settings.VAPI_ASSISTANT_ID,

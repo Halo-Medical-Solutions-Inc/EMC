@@ -150,6 +150,8 @@ def build_extraction_schema(
             "type": "string",
             "description": (
                 "Direct, concise summary of the call. "
+                "The practice name is Eye Medical Center of Fresno — always use this exact name, "
+                "never a transcription variant like 'iMedical' or 'I Medical.' "
                 "Use the correct provider name from the schema (not transcript typos). "
                 f"Available providers: {provider_names_str}."
             ),
