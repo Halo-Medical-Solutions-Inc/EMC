@@ -1,6 +1,5 @@
 from typing import Any, Dict, List, Optional
 
-
 DEFAULT_PROVIDER_NAMES: List[str] = [
     "Dr. Bertolucci",
     "Dr. Prescott",
@@ -15,6 +14,33 @@ DEFAULT_PROVIDER_NAMES: List[str] = [
 PROVIDER_STAFF_DIRECTORY: List[Dict[str, Any]] = []
 
 DEPARTMENT_STAFF_DIRECTORY: List[Dict[str, Any]] = []
+
+_TEAMS_OTHER_LABEL = "Other"
+
+_PROVIDER_TO_CALL_TEAMS_MAP = (
+    "Map provider_name to call_teams using the doctor's personal team: "
+    "Dr. Bertolucci → George Bertolucci; Dr. Prescott → Daniel Prescott; "
+    "Dr. Thinda → Sumeer Thinda; Dr. Teasley → Laura Teasley; Dr. Mehta → Neesurg Mehta; "
+    "Dr. Ghajar → Mehdi Ghajar (corneal refractive surgery, LASIK, cross-linking)."
+)
+
+_TEAMS_FIELD_SUFFIX = (
+    f"{_PROVIDER_TO_CALL_TEAMS_MAP} "
+    "Each retina specialist has their own team bucket (there is no shared Retina department team). "
+    f"Use '{_TEAMS_OTHER_LABEL}' when the call does not belong to any listed provider team "
+    "(billing-only, general info, unknown provider, spam, or providers outside these six)."
+)
+
+
+def _call_teams_field_description(team_names_str: str) -> str:
+    return (
+        "All teams this call is associated with. "
+        "A call can belong to multiple teams. "
+        "Select all that apply based on the call content, provider, and context. "
+        "Infer the best match from available teams even when transcript has errors. "
+        f"Available teams: {team_names_str}. "
+        + _TEAMS_FIELD_SUFFIX
+    )
 
 
 def build_staff_extension_map(
@@ -175,18 +201,7 @@ def build_extraction_schema(
 
     if team_names:
         team_names_str = ", ".join(team_names)
-        teams_description = (
-            "All teams this call is associated with. "
-            "A call can belong to multiple teams. "
-            "Select all that apply based on the call content, provider, and context. "
-            "Infer the best match from available teams even when transcript has errors. "
-            f"Available teams: {team_names_str}. "
-            "Provider-to-team mapping: "
-            "Dr. Bertolucci, Dr. Prescott, Dr. Thinda, Dr. Teasley, and Dr. Mehta are all Retina team providers. "
-            "Dr. Ghajar belongs to the Dr. Ghajar team (includes LASIK, cross-linking, and corneal refractive surgery). "
-            "Use 'Other' only when the call does not involve any of the above providers "
-            "(e.g. billing-only, general info, unknown provider, spam, or providers outside these six)."
-        )
+        teams_description = _call_teams_field_description(team_names_str)
         if staff_extension_map:
             teams_description += (
                 " When the caller mentions a staff name or extension number, "

@@ -557,7 +557,7 @@ export default function PracticeSettingsPage() {
                 type="text"
                 value={newTeamTitle}
                 onChange={(e) => setNewTeamTitle(e.target.value)}
-                placeholder="Retina"
+                placeholder="George Bertolucci"
                 className="h-9 border-neutral-200 bg-white text-[14px] text-neutral-900 placeholder:text-neutral-400"
               />
             </div>
@@ -569,7 +569,7 @@ export default function PracticeSettingsPage() {
                 id="team_description"
                 value={newTeamDescription}
                 onChange={(e) => setNewTeamDescription(e.target.value)}
-                placeholder="Retina department — Dr. Bertolucci, Dr. Prescott, Dr. Thinda, Dr. Teasley, Dr. Mehta"
+                placeholder="Vitreoretinal disease and surgery"
                 className="min-h-[80px] border-neutral-200 bg-white text-[14px] text-neutral-900 placeholder:text-neutral-400"
               />
             </div>
