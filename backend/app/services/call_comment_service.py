@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.call import Call
 from app.models.call_comment import CallComment
+from app.services import mention_service
 
 
 async def get_call_comments(
@@ -41,6 +42,9 @@ async def add_call_comment(
     await db.commit()
     await db.refresh(comment)
     await db.refresh(comment, ["user"])
+
+    await mention_service.create_mentions_for_comment(db, comment, user_id)
+
     return comment
 
 
@@ -48,11 +52,13 @@ async def delete_call_comment(
     db: AsyncSession,
     call_id: uuid.UUID,
     comment_id: uuid.UUID,
+    user_id: uuid.UUID,
 ) -> bool:
     result = await db.execute(
         select(CallComment).where(
             CallComment.id == comment_id,
             CallComment.call_id == call_id,
+            CallComment.user_id == user_id,
         )
     )
     comment = result.scalar_one_or_none()

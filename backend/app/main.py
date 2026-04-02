@@ -1,27 +1,19 @@
 import asyncio
 import json
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
 from typing import Any, AsyncGenerator, Dict
 
-import pytz
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import analytics, auth, audit_logs, calls, invitations, practice, users, webhooks, websocket
+from app.api import analytics, auth, audit_logs, calls, invitations, mentions, messaging, practice, users, webhooks, websocket
 from app.config import settings
 from app.database.redis_client import close_redis, get_redis
-from app.services.daily_email_service import send_daily_summary_emails
 from app.services.publisher_service import CHANNEL_NAME
 from app.services.stale_call_service import run_stale_call_recovery_loop
 from app.utils.errors import AppError
 from app.websocket_manager import manager
-
-
-DAILY_EMAIL_HOUR = 15
-DAILY_EMAIL_MINUTE = 30
-DAILY_EMAIL_TIMEZONE = "America/Los_Angeles"
 
 
 async def redis_subscriber() -> None:
@@ -34,7 +26,12 @@ async def redis_subscriber() -> None:
             if message["type"] == "message":
                 try:
                     data = json.loads(message["data"])
-                    await manager.broadcast(data)
+                    target_user_ids = data.pop("target_user_ids", None)
+                    if target_user_ids:
+                        for user_id in target_user_ids:
+                            await manager.send_to_user(user_id, data)
+                    else:
+                        await manager.broadcast(data)
                 except Exception as e:
                     print(f"Error broadcasting message: {e}")
     except asyncio.CancelledError:
@@ -42,51 +39,10 @@ async def redis_subscriber() -> None:
         await pubsub.close()
 
 
-async def daily_email_scheduler() -> None:
-    tz = pytz.timezone(DAILY_EMAIL_TIMEZONE)
-
-    while True:
-        try:
-            now = datetime.now(tz)
-            target_time = now.replace(
-                hour=DAILY_EMAIL_HOUR,
-                minute=DAILY_EMAIL_MINUTE,
-                second=0,
-                microsecond=0,
-            )
-
-            if now >= target_time:
-                target_time = target_time + timedelta(days=1)
-
-            wait_seconds = (target_time - now).total_seconds()
-            print(
-                f"[SCHEDULER] Next daily email at {target_time.strftime('%Y-%m-%d %H:%M %Z')} "
-                f"(in {wait_seconds / 3600:.1f} hours)"
-            )
-
-            await asyncio.sleep(wait_seconds)
-
-            print("[SCHEDULER] Running daily email job")
-            try:
-                await send_daily_summary_emails()
-            except Exception as e:
-                print(f"[SCHEDULER] Error in daily email job: {e}")
-
-            await asyncio.sleep(60)
-
-        except asyncio.CancelledError:
-            print("[SCHEDULER] Daily email scheduler stopped")
-            break
-        except Exception as e:
-            print(f"[SCHEDULER] Unexpected error: {e}")
-            await asyncio.sleep(300)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     subscriber_task = asyncio.create_task(redis_subscriber())
     stale_recovery_task = asyncio.create_task(run_stale_call_recovery_loop())
-    daily_email_task = asyncio.create_task(daily_email_scheduler())
 
     print("AI Receptionist backend started")
 
@@ -94,7 +50,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     subscriber_task.cancel()
     stale_recovery_task.cancel()
-    daily_email_task.cancel()
 
     try:
         await subscriber_task
@@ -103,11 +58,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     try:
         await stale_recovery_task
-    except asyncio.CancelledError:
-        pass
-
-    try:
-        await daily_email_task
     except asyncio.CancelledError:
         pass
 
@@ -161,8 +111,10 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(invitations.router)
 app.include_router(audit_logs.router)
+app.include_router(messaging.router)
 app.include_router(practice.router)
 app.include_router(calls.router)
+app.include_router(mentions.router)
 app.include_router(webhooks.router)
 app.include_router(websocket.router)
 

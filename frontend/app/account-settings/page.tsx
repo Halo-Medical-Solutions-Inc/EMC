@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PasswordInput from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -292,9 +293,8 @@ export default function AccountSettingsPage() {
                 >
                   Current Password
                 </Label>
-                <Input
+                <PasswordInput
                   id="current_password"
-                  type="password"
                   value={passwordData.current_password}
                   onChange={(e) =>
                     setPasswordData({
@@ -314,9 +314,8 @@ export default function AccountSettingsPage() {
                 >
                   New Password
                 </Label>
-                <Input
+                <PasswordInput
                   id="new_password"
-                  type="password"
                   value={passwordData.new_password}
                   onChange={(e) =>
                     setPasswordData({
@@ -339,9 +338,8 @@ export default function AccountSettingsPage() {
                 >
                   Confirm New Password
                 </Label>
-                <Input
+                <PasswordInput
                   id="confirm_password"
-                  type="password"
                   value={passwordData.confirm_password}
                   onChange={(e) =>
                     setPasswordData({

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { AlertCircle, ArrowUp, CheckCircle2, ChevronDown, ChevronUp, CircleAlert, Circle, ChevronsUpDown, MoreHorizontal, Trash2, Users, X, XCircle } from "lucide-react";
+import { AlertCircle, Archive, ArrowUp, CheckCircle2, ChevronDown, ChevronUp, CircleAlert, Circle, ChevronsUpDown, MoreHorizontal, Trash2, Users, X, XCircle } from "lucide-react";
 
 import {
   AlertDialog,
@@ -32,8 +32,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import CommentContent from "@/components/calls/comment-content";
+import MentionInput from "@/components/calls/mention-input";
 import {
   Tooltip,
   TooltipContent,
@@ -41,7 +42,6 @@ import {
 } from "@/components/ui/tooltip";
 import apiClient from "@/lib/api-client";
 import { extractTransferInfo, formatCallDateTime, formatCommentTimestamp, formatPhoneNumber } from "@/lib/call-utils";
-import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ApiResponse } from "@/types/api";
@@ -120,14 +120,25 @@ export function CallDetailPanel({
     }
   }, [call?.id, open, fetchComments]);
 
-  const handleResolveComment = async (commentId: string) => {
+  useEffect(() => {
+    if (!call?.id || !open) return;
+    function handleVisibility(): void {
+      if (document.visibilityState === "visible") {
+        fetchComments();
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [call?.id, open, fetchComments]);
+
+  const handleArchiveComment = async (commentId: string) => {
     if (!call) return;
     try {
       await apiClient.delete<ApiResponse<null>>(`/api/calls/${call.id}/comments/${commentId}`);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
-      toast.success("Comment resolved");
+      toast.success("Comment archived");
     } catch {
-      toast.error("Failed to resolve comment");
+      toast.error("Failed to archive comment");
     }
   };
 
@@ -591,28 +602,30 @@ export function CallDetailPanel({
                               </span>
                             </div>
                             <p className="mt-0.5 text-[13px] text-neutral-700 leading-relaxed">
-                              {c.content}
+                              <CommentContent content={c.content} users={users} />
                             </p>
                           </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                className="opacity-0 group-hover/comment:opacity-100 flex h-7 w-7 shrink-0 items-center justify-center rounded text-neutral-400 transition-opacity hover:bg-neutral-100 hover:text-neutral-600"
-                                aria-label="Comment options"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => handleResolveComment(c.id)}
-                                className="cursor-pointer"
-                              >
-                                <CheckCircle2 className="h-4 w-4" />
-                                Resolve
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          {c.user_id === currentUser?.id && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  className="opacity-0 group-hover/comment:opacity-100 flex h-7 w-7 shrink-0 items-center justify-center rounded text-neutral-400 transition-opacity hover:bg-neutral-100 hover:text-neutral-600"
+                                  aria-label="Comment options"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => handleArchiveComment(c.id)}
+                                  className="cursor-pointer"
+                                >
+                                  <Archive className="h-4 w-4" />
+                                  Archive
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
                       ))
                     )}
@@ -624,22 +637,13 @@ export function CallDetailPanel({
                             : "?"}
                         </AvatarFallback>
                       </Avatar>
-                      <Input
+                      <MentionInput
                         value={commentValue}
-                        onChange={(e) => setCommentValue(e.target.value)}
-                        onFocus={() => {
-                          if (!commentValue) {
-                            setCommentValue(format(new Date(), "M/d h:mm a") + " – ");
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            handleAddComment();
-                          }
-                        }}
+                        onChange={setCommentValue}
+                        onSubmit={handleAddComment}
+                        users={users}
+                        disabled={savingComment}
                         placeholder="Add a comment..."
-                        className="flex-1 border-0 bg-transparent px-0 text-[13px] text-neutral-700 shadow-none rounded-none outline-none ring-0 placeholder:text-neutral-400 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:shadow-none"
                       />
                       <Tooltip>
                         <TooltipTrigger asChild>

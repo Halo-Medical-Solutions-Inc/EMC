@@ -1,16 +1,19 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { fetchUsers } from "@/store/slices/users-slice";
 import { fetchInvitations } from "@/store/slices/invitations-slice";
+import { fetchUnreadMentionCount } from "@/store/slices/mentions-slice";
+import { fetchConversations, fetchUnreadCount } from "@/store/slices/messages-slice";
 import { fetchPractice } from "@/store/slices/practice-slice";
 import { websocketClient } from "@/lib/websocket";
 import { handleWebSocketEvent } from "@/store/websocket-handler";
+
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
@@ -29,11 +32,19 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
   const showSidebar = !isPublicRoute && !isHomePage && isAuthenticated;
 
+  const resyncData = useCallback(() => {
+    dispatch(fetchConversations());
+    dispatch(fetchUnreadCount());
+    dispatch(fetchUnreadMentionCount());
+  }, [dispatch]);
+
   useEffect(() => {
     if (isAuthenticated && user) {
       dispatch(fetchUsers());
       dispatch(fetchPractice());
       dispatch(fetchInvitations());
+      dispatch(fetchUnreadCount());
+      dispatch(fetchUnreadMentionCount());
     }
   }, [isAuthenticated, user, dispatch]);
 
@@ -47,6 +58,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
             dispatch
           );
         });
+        websocketClient.onReconnect(resyncData);
         websocketClient.connect(token);
       }
     }
@@ -54,7 +66,22 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     return () => {
       websocketClient.disconnect();
     };
-  }, [isAuthenticated, dispatch]);
+  }, [isAuthenticated, dispatch, resyncData]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    function handleVisibilityChange(): void {
+      if (document.visibilityState === "visible") {
+        resyncData();
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isAuthenticated, resyncData]);
 
   if (!showSidebar) {
     return <>{children}</>;

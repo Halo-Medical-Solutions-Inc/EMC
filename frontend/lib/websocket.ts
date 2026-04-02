@@ -16,6 +16,7 @@ export class WebSocketClient {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private pingInterval: NodeJS.Timeout | null = null;
   private messageCallback: MessageCallback | null = null;
+  private reconnectCallback: (() => void) | null = null;
   private connectionState: ConnectionState = "disconnected";
 
   private getWebSocketUrl(): string {
@@ -52,9 +53,13 @@ export class WebSocketClient {
       this.ws = new WebSocket(`${wsUrl}?token=${token}`);
 
       this.ws.onopen = () => {
+        const wasReconnect = this.reconnectAttempts > 0;
         this.connectionState = "connected";
         this.reconnectAttempts = 0;
         this.startPingInterval();
+        if (wasReconnect && this.reconnectCallback) {
+          this.reconnectCallback();
+        }
       };
 
       this.ws.onmessage = (event) => {
@@ -114,6 +119,10 @@ export class WebSocketClient {
 
   onMessage(callback: MessageCallback): void {
     this.messageCallback = callback;
+  }
+
+  onReconnect(callback: () => void): void {
+    this.reconnectCallback = callback;
   }
 
   getState(): ConnectionState {

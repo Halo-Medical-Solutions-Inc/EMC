@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { format } from "date-fns";
 import { CheckCircle2, Circle, CircleAlert, ChevronLeft, ChevronRight, Filter, Loader2, Plus, Search, X } from "lucide-react";
@@ -51,6 +51,7 @@ const INTENT_ORDER = [
 ];
 
 function DashboardContent() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
   const { calls, selectedCall, loading, detailLoading } = useAppSelector(
@@ -64,7 +65,7 @@ function DashboardContent() {
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [urlCallHandled, setUrlCallHandled] = useState(false);
+  const [handledCallParam, setHandledCallParam] = useState<string | null>(null);
   const [contentWidth, setContentWidth] = useState(0);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [addTabPopoverOpen, setAddTabPopoverOpen] = useState(false);
@@ -76,15 +77,16 @@ function DashboardContent() {
 
   useEffect(() => {
     const callId = searchParams.get("call");
-    if (callId && !urlCallHandled) {
-      setUrlCallHandled(true);
+    const cacheKey = callId ? `${callId}_${searchParams.get("t") || ""}` : null;
+    if (callId && cacheKey !== handledCallParam) {
+      setHandledCallParam(cacheKey);
       dispatch(fetchCallDetail(callId)).then((result) => {
         if (fetchCallDetail.fulfilled.match(result)) {
           setIsPanelOpen(true);
         }
       });
     }
-  }, [searchParams, urlCallHandled, dispatch]);
+  }, [searchParams, handledCallParam, dispatch]);
 
   useEffect(() => {
     if (user && practice && !hasSetDefaultTabs) {
@@ -106,6 +108,16 @@ function DashboardContent() {
   useEffect(() => {
     setReviewFilter("needs_reviewed");
   }, [activeTab]);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible" && isPanelOpen && selectedCall) {
+        dispatch(fetchCallDetail(selectedCall.id));
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [isPanelOpen, selectedCall, dispatch]);
 
   useEffect(() => {
     const dates: string[] = [];
@@ -404,6 +416,16 @@ function DashboardContent() {
         return;
       }
 
+      const active = document.activeElement;
+      if (
+        active &&
+        (active.tagName === "INPUT" ||
+          active.tagName === "TEXTAREA" ||
+          (active as HTMLElement).isContentEditable)
+      ) {
+        return;
+      }
+
       if (!isPanelOpen || !selectedCall) return;
 
       const navList = visibleCallsRef.current;
@@ -642,6 +664,11 @@ function DashboardContent() {
                 placeholder="Search calls..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }
+                }}
                 className="pl-9 h-9 border-neutral-200 bg-white"
               />
             </div>

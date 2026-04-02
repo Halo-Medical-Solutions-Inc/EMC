@@ -123,3 +123,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #a3a3a3;
+  pointer-events: none;
+  height: 0;
+}

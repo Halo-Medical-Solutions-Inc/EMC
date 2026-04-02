@@ -22,13 +22,15 @@ export default function SearchPage() {
   const { practice } = useAppSelector((state) => state.practice);
   const practiceTeams = practice?.teams?.teams || [];
 
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const initialQuery = searchParams.get("q") || "";
+  const [searchQuery, setSearchQuery] = useState<string>(initialQuery);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedCall, setSelectedCall] = useState<Call | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [urlCallHandled, setUrlCallHandled] = useState(false);
+  const [handledCallParam, setHandledCallParam] = useState<string | null>(null);
+  const [urlQueryHandled, setUrlQueryHandled] = useState(false);
   const [urlCallLoading, setUrlCallLoading] = useState(false);
   const [contentWidth, setContentWidth] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -36,8 +38,9 @@ export default function SearchPage() {
 
   useEffect(() => {
     const callId = searchParams.get("call");
-    if (callId && !urlCallHandled) {
-      setUrlCallHandled(true);
+    const cacheKey = callId ? `${callId}_${searchParams.get("t") || ""}` : null;
+    if (callId && cacheKey !== handledCallParam) {
+      setHandledCallParam(cacheKey);
       setUrlCallLoading(true);
       apiClient
         .get<ApiResponse<Call>>(`/api/calls/${callId}`)
@@ -63,7 +66,51 @@ export default function SearchPage() {
           setUrlCallLoading(false);
         });
     }
-  }, [searchParams, urlCallHandled]);
+  }, [searchParams, handledCallParam]);
+
+  useEffect(() => {
+    if (initialQuery && !urlQueryHandled) {
+      setUrlQueryHandled(true);
+      setSearchQuery(initialQuery);
+      setIsSearching(true);
+      setHasSearched(true);
+      apiClient
+        .post<ApiResponse<SearchResult[]>>("/api/calls/search", {
+          query: initialQuery.trim(),
+        })
+        .then((response) => {
+          if (response.data.success && Array.isArray(response.data.data)) {
+            setSearchResults(response.data.data);
+          } else {
+            setSearchResults([]);
+          }
+        })
+        .catch(() => {
+          toast.error("Search failed. Please try again.");
+          setSearchResults([]);
+        })
+        .finally(() => {
+          setIsSearching(false);
+        });
+    }
+  }, [initialQuery, urlQueryHandled]);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible" && isPanelOpen && selectedCall) {
+        apiClient
+          .get<ApiResponse<Call>>(`/api/calls/${selectedCall.id}`)
+          .then((response) => {
+            if (response.data.success && response.data.data) {
+              setSelectedCall(response.data.data);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [isPanelOpen, selectedCall]);
 
   useEffect(() => {
     const updateContentWidth = () => {

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PasswordInput from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { PageSpinner } from "@/components/ui/page-spinner";
@@ -23,7 +24,6 @@ const VALID_REDIRECT_PATHS = [
   "/search",
   "/practice-settings",
   "/account-settings",
-  "/team-settings",
 ];
 
 function getValidRedirect(redirect: string | null): string {
@@ -119,9 +119,8 @@ function LoginContent() {
                     Forgot?
                   </Link>
                 </div>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

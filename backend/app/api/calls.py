@@ -24,7 +24,7 @@ from app.schemas.call import (
     CallTeamsUpdate,
 )
 from app.schemas.call_comment import CallCommentCreate, CallCommentResponse
-from app.services import audit_service, call_comment_service, call_service, publisher_service
+from app.services import audit_service, call_comment_service, call_service, mention_service, publisher_service
 from app.utils.errors import AppError
 
 router = APIRouter(prefix="/api/calls", tags=["calls"])
@@ -169,6 +169,26 @@ async def add_call_comment(
     if comment is None:
         raise AppError("Call not found", 404)
 
+    from sqlalchemy import select
+    from app.models.comment_mention import CommentMention
+    at_mentioned_result = await db.execute(
+        select(CommentMention.user_id).where(
+            CommentMention.comment_id == comment.id,
+            CommentMention.source == "call_comment",
+        )
+    )
+    at_mentioned_ids = [uid for uid in at_mentioned_result.scalars().all()]
+
+    await mention_service.notify_call_activity(
+        db=db,
+        call_id=call_id,
+        actor_id=current_user.id,
+        action="comment",
+        snippet=comment.content,
+        comment_id=comment.id,
+        exclude_user_ids=at_mentioned_ids,
+    )
+
     return _success(
         {
             "id": str(comment.id),
@@ -193,10 +213,11 @@ async def delete_call_comment(
         db=db,
         call_id=call_id,
         comment_id=comment_id,
+        user_id=current_user.id,
     )
     if not deleted:
-        raise AppError("Comment not found", 404)
-    return _success(None, message="Comment resolved")
+        raise AppError("Comment not found or not yours", 404)
+    return _success(None, message="Comment archived")
 
 
 @router.patch("/{call_id}/review")
@@ -235,6 +256,15 @@ async def update_review_status(
             "is_reviewed": call.is_reviewed,
             "reviewed_by": str(call.reviewed_by) if call.reviewed_by else None,
         },
+    )
+
+    review_snippet = "marked as reviewed" if body.is_reviewed else "marked as needs review"
+    await mention_service.notify_call_activity(
+        db=db,
+        call_id=call_id,
+        actor_id=current_user.id,
+        action="review",
+        snippet=review_snippet,
     )
 
     vapi_data = call_service.decrypt_vapi_data(call)
@@ -299,6 +329,15 @@ async def update_flag_status(
             "flagged_by": str(call.flagged_by) if call.flagged_by else None,
             "flagged_at": call.flagged_at.isoformat() if call.flagged_at else None,
         },
+    )
+
+    flag_snippet = "flagged this call" if body.is_flagged else "unflagged this call"
+    await mention_service.notify_call_activity(
+        db=db,
+        call_id=call_id,
+        actor_id=current_user.id,
+        action="flag",
+        snippet=flag_snippet,
     )
 
     vapi_data = call_service.decrypt_vapi_data(call)

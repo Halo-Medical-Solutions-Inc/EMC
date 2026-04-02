@@ -20,7 +20,6 @@ from app.schemas.practice import (
     TeamUpdate,
 )
 from app.services import audit_service, practice_service, publisher_service
-from app.services.daily_email_service import send_test_email_for_team
 from app.utils.errors import AppError
 
 router = APIRouter(prefix="/api/practice", tags=["practice"])
@@ -184,10 +183,7 @@ async def test_team_email(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    success = await send_test_email_for_team(team_id, current_user.email)
-    if not success:
-        raise AppError("Failed to send test email", 500)
-    return _success(message="Test email sent")
+    raise AppError("Daily email summaries are currently disabled", 400)
 
 
 @router.put("/teams/{team_id}/members")
