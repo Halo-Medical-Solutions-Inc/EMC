@@ -288,7 +288,7 @@ export function AppSidebar() {
             onClick={closeInbox}
           />
           <div
-            className="fixed left-0 top-0 z-[70] h-screen overflow-hidden border-r border-neutral-200 bg-white shadow-md transition-[width] duration-200 ease-in-out md:left-[3rem]"
+            className="fixed left-0 top-0 z-[70] h-dvh overflow-hidden border-r border-neutral-200 bg-white shadow-md transition-[width] duration-200 ease-in-out md:left-[3rem]"
             style={{ width: inboxExpanded ? "20rem" : "0" }}
           >
             <div className="h-full w-80">

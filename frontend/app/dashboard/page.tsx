@@ -475,7 +475,7 @@ function DashboardContent() {
 
   return (
     <div
-      className="flex flex-col h-screen"
+      className="flex flex-col h-dvh"
       style={{
         marginRight:
           !isMobile && isPanelOpen && isLargeScreen

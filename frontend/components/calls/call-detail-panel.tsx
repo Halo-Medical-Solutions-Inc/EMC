@@ -299,7 +299,7 @@ export function CallDetailPanel({
     <div
       className="fixed right-0 top-0 z-50 animate-in slide-in-from-right duration-300 border-l border-neutral-200 bg-white"
       style={{
-        height: "100vh",
+        height: "100dvh",
         width: panelIsFullScreen ? "calc(100% - 3rem)" : "calc(50vw - 1.5rem)",
       }}
     >

@@ -89,7 +89,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="flex h-screen w-full bg-white">
+      <div className="flex h-dvh w-full bg-white">
         <AppSidebar />
         <main
           className="flex-1 overflow-auto"
