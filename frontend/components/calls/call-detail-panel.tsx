@@ -326,7 +326,7 @@ export function CallDetailPanel({
                   <h3 className="truncate text-lg font-semibold leading-tight tracking-tight text-neutral-900 lg:text-xl">
                     {headerName}
                   </h3>
-                  <p className="mt-1 min-w-0 truncate text-xs leading-snug tabular-nums text-neutral-400">
+                  <p className="mt-1 min-w-0 truncate text-[10px] leading-snug tabular-nums text-neutral-400 lg:text-xs">
                     {phoneNumber ? formatPhoneNumber(phoneNumber) : "No phone number"}
                     <span className="mx-1.5">·</span>
                     {headerSubline}
