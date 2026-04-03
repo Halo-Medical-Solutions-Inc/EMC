@@ -9,7 +9,7 @@ from app.database.session import get_db
 from app.models.messaging import ConversationType
 from app.models.user import User, UserRole
 from app.schemas.messaging import ConversationCreate, MemberAdd, MessageCreate, MessageEdit, ReactionToggle
-from app.services import mention_service, messaging_service
+from app.services import mention_service, messaging_service, slack_notify_service
 from app.services.publisher_service import publish_to_users
 from app.utils.errors import AppError
 
@@ -154,6 +154,17 @@ async def send_message(
         author_id=current_user.id,
         member_ids=member_ids,
     )
+
+    if await messaging_service.is_support_channel(db, conversation_id):
+        try:
+            await slack_notify_service.notify_platform_support_message(
+                author_name=current_user.full_name or "Someone",
+                content=body.content.strip(),
+                conversation_id=conversation_id,
+                is_reply=reply_to is not None,
+            )
+        except Exception as exc:
+            print(f"Slack notify error: {exc}")
 
     return _success(serialized, message="Message sent")
 

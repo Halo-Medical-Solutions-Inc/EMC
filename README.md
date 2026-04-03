@@ -42,6 +42,19 @@ npm run dev
 - **Claude API**: Post-call data extraction
 - **SMTP (Gmail)**: Email invitations and password resets
 
+### Optional: Slack (Platform Support alerts)
+
+When set, new messages and thread replies in the **Platform Support** channel also post to a Slack channel (for example `#support`).
+
+
+| Variable                   | Description                                                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `SLACK_BOT_TOKEN`          | Bot User OAuth token (`xoxb-...`) with `chat:write` (and `chat:write.public` if the bot is not invited to the channel). |
+| `SLACK_SUPPORT_CHANNEL_ID` | Channel ID for `#support` (starts with `C`).                                                                            |
+
+
+Leave both empty to disable Slack notifications.
+
 ### Customization
 
 1. Update `backend/app/services/extraction_schema.py` with your provider names
@@ -57,11 +70,14 @@ alembic upgrade head
 
 ## Scripts
 
-| Script | Purpose |
-|--------|---------|
-| `seed_initial_data.py` | Create practice + first admin user |
-| `seed_fake_calls.py` | Generate test call data |
-| `count_calls.py` | Display call statistics |
-| `inspect_call.py` | View details of a specific call |
-| `send_bulk_invitations.py` | Invite multiple users |
+
+| Script                     | Purpose                                 |
+| -------------------------- | --------------------------------------- |
+| `seed_initial_data.py`     | Create practice + first admin user      |
+| `seed_fake_calls.py`       | Generate test call data                 |
+| `count_calls.py`           | Display call statistics                 |
+| `inspect_call.py`          | View details of a specific call         |
+| `send_bulk_invitations.py` | Invite multiple users                   |
 | `backfill_display_data.py` | Rebuild display_data for existing calls |
+
+

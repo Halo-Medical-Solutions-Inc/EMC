@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     CLAUDE_API_KEY: str = ""
     CLAUDE_EXTRACTION_MODEL: str = "claude-opus-4-5-20251101"
 
+    SLACK_BOT_TOKEN: str = ""
+    SLACK_SUPPORT_CHANNEL_ID: str = ""
+
     @property
     def cors_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
