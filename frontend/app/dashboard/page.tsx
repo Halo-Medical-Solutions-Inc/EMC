@@ -666,24 +666,26 @@ function DashboardContent() {
                       {tab.count}
                     </span>
                   )}
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveTab(tab.id);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
+                  {visibleTabs.length > 1 && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
                         e.stopPropagation();
                         handleRemoveTab(tab.id);
-                      }
-                    }}
-                    className="ml-1 p-0.5 rounded hover:bg-neutral-200 opacity-100 transition-opacity cursor-pointer inline-flex lg:opacity-0 lg:group-hover:opacity-100"
-                  >
-                    <X className="h-3 w-3 text-neutral-500" />
-                  </span>
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleRemoveTab(tab.id);
+                        }
+                      }}
+                      className="ml-1 p-0.5 rounded hover:bg-neutral-200 opacity-100 transition-opacity cursor-pointer inline-flex lg:opacity-0 lg:group-hover:opacity-100"
+                    >
+                      <X className="h-3 w-3 text-neutral-500" />
+                    </span>
+                  )}
                   {activeTab === tab.id && (
                     <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-neutral-900" />
                   )}
@@ -738,8 +740,16 @@ function DashboardContent() {
                     router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
                   }
                 }}
-                className="pl-9 h-9 border-neutral-200 bg-white"
+                className={cn("pl-9 h-9 border-neutral-200 bg-white", searchQuery && "pr-8")}
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
             <div className="flex shrink-0 bg-white rounded-md border border-neutral-200">
               <button
