@@ -1,10 +1,18 @@
-import { playSound } from "@/lib/sound-engine";
-import { notificationPopSound } from "@/lib/sounds/notification-pop";
+let audio: HTMLAudioElement | null = null;
+
+function getAudio(): HTMLAudioElement {
+  if (!audio) {
+    audio = new Audio("/notification.mp3");
+    audio.volume = 0.7;
+  }
+  return audio;
+}
 
 export async function playNotificationSound(): Promise<void> {
   try {
-    await playSound(notificationPopSound.dataUri, { volume: 0.7 });
+    const a = getAudio();
+    a.currentTime = 0;
+    await a.play();
   } catch {
-    // Browser may block autoplay before user interaction
   }
 }

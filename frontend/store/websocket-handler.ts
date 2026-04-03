@@ -35,7 +35,6 @@ function shouldDingForCall(
   call: Partial<CallDetail> & { id: string },
   getState: () => RootState,
 ): boolean {
-  if (document.visibilityState !== "hidden") return false;
   if (call.extraction_status !== "COMPLETED") return false;
   if (call.is_reviewed) return false;
   if (dingedCallIds.has(call.id)) return false;
