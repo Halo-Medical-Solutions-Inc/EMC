@@ -155,13 +155,16 @@ async def send_message(
         member_ids=member_ids,
     )
 
-    if await messaging_service.is_support_channel(db, conversation_id):
+    if await messaging_service.is_support_channel(
+        db, conversation_id
+    ) or await messaging_service.should_slack_notify_halohealth_dm(
+        db, conversation_id, current_user.id
+    ):
         try:
             await slack_notify_service.notify_platform_support_message(
                 author_name=current_user.full_name or "Someone",
                 content=body.content.strip(),
                 conversation_id=conversation_id,
-                is_reply=reply_to is not None,
             )
         except Exception as exc:
             print(f"Slack notify error: {exc}")

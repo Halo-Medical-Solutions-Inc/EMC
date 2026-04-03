@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "rea
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { format } from "date-fns";
-import { CheckCircle2, Circle, CircleAlert, ChevronLeft, ChevronRight, Filter, Loader2, Plus, Search, X } from "lucide-react";
+import { CheckCircle2, Circle, CircleAlert, ChevronLeft, ChevronRight, List, Loader2, Plus, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { CallDetailPanel } from "@/components/calls/call-detail-panel";
@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile";
 import apiClient from "@/lib/api-client";
 import { localDateToUtcEndOfDay, localDateToUtcStartOfDay } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
@@ -54,6 +55,7 @@ function DashboardContent() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
+  const isMobile = useIsMobile();
   const { calls, selectedCall, loading, detailLoading } = useAppSelector(
     (state) => state.calls
   );
@@ -66,13 +68,12 @@ function DashboardContent() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [handledCallParam, setHandledCallParam] = useState<string | null>(null);
-  const [contentWidth, setContentWidth] = useState(0);
+  const [isLargeScreen, setIsLargeScreen] = useState(true);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [addTabPopoverOpen, setAddTabPopoverOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [reviewFilter, setReviewFilter] = useState<string>("needs_reviewed");
   const [hasSetDefaultTabs, setHasSetDefaultTabs] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
   const callRowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
 
   useEffect(() => {
@@ -150,14 +151,11 @@ function DashboardContent() {
   }, [selectedDate, dispatch]);
 
   useEffect(() => {
-    const updateContentWidth = () => {
-      if (contentRef.current) {
-        setContentWidth(contentRef.current.offsetWidth);
-      }
-    };
-    updateContentWidth();
-    window.addEventListener("resize", updateContentWidth);
-    return () => window.removeEventListener("resize", updateContentWidth);
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => setIsLargeScreen(mql.matches);
+    setIsLargeScreen(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
   }, []);
 
   const handleDateChange = (date: Date | undefined) => {
@@ -477,26 +475,27 @@ function DashboardContent() {
 
   return (
     <div
-      ref={contentRef}
-      className="flex flex-col h-screen transition-all duration-300"
+      className="flex flex-col h-screen"
       style={{
         marginRight:
-          isPanelOpen && contentWidth > 0 ? `${contentWidth * 0.5}px` : "0",
+          !isMobile && isPanelOpen && isLargeScreen
+            ? "calc(50vw - 1.5rem)"
+            : "0",
       }}
     >
       <header className="sticky top-0 z-10 bg-white">
-        <div className="px-10 py-8">
-          <div className="mb-6 flex items-start justify-between">
-            <div className="flex-1">
-              <h1 className="text-[24px] font-semibold tracking-tight text-neutral-900">
+        <div className="px-4 py-4 md:px-10 md:py-8">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-xl font-semibold tracking-tight text-neutral-900 md:text-[24px]">
                 Dashboard
               </h1>
-              <p className="mt-1 text-[15px] text-neutral-500">
+              <p className="mt-0.5 hidden text-[15px] text-neutral-500 lg:block">
                 View and manage incoming calls
               </p>
             </div>
 
-            <div className="flex flex-col items-end gap-3">
+            <div className="hidden shrink-0 flex-col items-end gap-1.5 lg:flex">
               <div className="flex items-center border border-neutral-200 bg-white shadow-none overflow-hidden">
                 <button
                   className="h-9 w-9 flex items-center justify-center hover:bg-neutral-50 transition-colors"
@@ -511,7 +510,7 @@ function DashboardContent() {
                       {getDateRangeText()}
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0" align="end">
                     {(() => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
@@ -556,7 +555,6 @@ function DashboardContent() {
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
-
               {user?.role === UserRole.SUPER_ADMIN && practice && (
                 <div className="text-[14px] text-neutral-600">
                   <span>Active Calls:</span>{" "}
@@ -568,11 +566,82 @@ function DashboardContent() {
               )}
             </div>
           </div>
+
+          <div className="mt-3 flex items-center justify-between gap-3 lg:hidden">
+            <div className="flex items-center border border-neutral-200 bg-white shadow-none overflow-hidden">
+              <button
+                className="h-8 w-8 flex items-center justify-center hover:bg-neutral-50 transition-colors"
+                onClick={() => navigateDate(-1)}
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+
+              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                <PopoverTrigger asChild>
+                  <button className="h-8 px-2.5 flex items-center hover:bg-neutral-50 transition-colors text-[12px] font-medium text-neutral-900">
+                    {getDateRangeText()}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  {(() => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const selected = new Date(selectedDate);
+                    selected.setHours(0, 0, 0, 0);
+                    const isTodaySelected = today.getTime() === selected.getTime();
+
+                    return (
+                      <>
+                        {!isTodaySelected && (
+                          <div className="p-3 border-b space-y-2">
+                            <Button
+                              variant="outline"
+                              className="w-full h-9"
+                              onClick={() => {
+                                setSelectedDate(new Date());
+                                setDatePickerOpen(false);
+                              }}
+                            >
+                              Today
+                            </Button>
+                          </div>
+                        )}
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={handleDateChange}
+                          initialFocus
+                          disabled={(date) => date > new Date()}
+                        />
+                      </>
+                    );
+                  })()}
+                </PopoverContent>
+              </Popover>
+
+              <button
+                className="h-8 w-8 flex items-center justify-center hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                onClick={() => navigateDate(1)}
+                disabled={isToday()}
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {user?.role === UserRole.SUPER_ADMIN && practice && (
+              <div className="text-[12px] text-neutral-500">
+                <span>Active:</span>{" "}
+                <span className="font-medium text-neutral-900">
+                  {practice.active_call_ids.length} /{" "}
+                  {practice.max_concurrent_calls}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {practiceTeams.length > 0 && (
-          <div className="px-10">
-            <div className="flex items-center gap-1 border-b border-neutral-100">
+          <div className="px-4 md:px-10">
+            <div className="flex items-center gap-1 overflow-x-auto border-b border-neutral-100 scrollbar-hide">
               {visibleTabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -654,10 +723,10 @@ function DashboardContent() {
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto px-10 py-6 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide md:px-10 md:py-6">
         <div className="space-y-4">
-          <div className="flex gap-3">
-            <div className="relative flex-1">
+          <div className="flex gap-2 md:gap-3">
+            <div className="relative min-w-0 flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
               <Input
                 type="text"
@@ -672,54 +741,58 @@ function DashboardContent() {
                 className="pl-9 h-9 border-neutral-200 bg-white"
               />
             </div>
-            <div className="flex bg-white rounded-md border border-neutral-200 overflow-hidden">
+            <div className="flex shrink-0 bg-white rounded-md border border-neutral-200">
               <button
                 onClick={() => setReviewFilter("all")}
+                title="All"
                 className={cn(
-                  "px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5",
+                  "px-2 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 md:px-3",
                   reviewFilter === "all"
                     ? "bg-neutral-900 text-white rounded-l"
                     : "text-neutral-600 hover:text-neutral-900"
                 )}
               >
-                <Filter className={cn("h-3.5 w-3.5", reviewFilter === "all" ? "text-white" : "text-neutral-400")} />
-                All
+                <List className={cn("h-3.5 w-3.5", reviewFilter === "all" ? "text-white" : "text-neutral-400")} />
+                <span className="hidden md:inline">All</span>
               </button>
               <button
                 onClick={() => setReviewFilter("reviewed")}
+                title="Reviewed"
                 className={cn(
-                  "px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5",
+                  "px-2 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 md:px-3",
                   reviewFilter === "reviewed"
                     ? "bg-neutral-900 text-white"
                     : "text-neutral-600 hover:text-neutral-900"
                 )}
               >
                 <CheckCircle2 className={cn("h-3.5 w-3.5", reviewFilter === "reviewed" ? "text-white" : "text-green-600")} />
-                Reviewed
+                <span className="hidden md:inline">Reviewed</span>
               </button>
               <button
                 onClick={() => setReviewFilter("needs_reviewed")}
+                title="Needs Review"
                 className={cn(
-                  "px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5",
+                  "px-2 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 md:px-3",
                   reviewFilter === "needs_reviewed"
                     ? "bg-neutral-900 text-white"
                     : "text-neutral-600 hover:text-neutral-900"
                 )}
               >
                 <Circle className={cn("h-3.5 w-3.5", reviewFilter === "needs_reviewed" ? "text-white" : "text-amber-600")} strokeWidth={2} />
-                Needs Review
+                <span className="hidden whitespace-nowrap md:inline">Needs Review</span>
               </button>
               <button
                 onClick={() => setReviewFilter("flagged")}
+                title="Flagged"
                 className={cn(
-                  "px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5",
+                  "px-2 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 md:px-3",
                   reviewFilter === "flagged"
                     ? "bg-neutral-900 text-white rounded-r"
                     : "text-neutral-600 hover:text-neutral-900"
                 )}
               >
                 <CircleAlert className={cn("h-3.5 w-3.5", reviewFilter === "flagged" ? "text-white" : "text-amber-500")} />
-                Flagged
+                <span className="hidden whitespace-nowrap md:inline">Flagged</span>
               </button>
             </div>
           </div>
@@ -787,7 +860,7 @@ function DashboardContent() {
         onDeleteCall={handleDeleteCall}
         onNavigatePrev={handleNavigatePrev}
         onNavigateNext={handleNavigateNext}
-        contentWidth={contentWidth}
+        isLargeScreen={isLargeScreen}
         users={users}
         currentUser={user}
         practiceTeams={practiceTeams}

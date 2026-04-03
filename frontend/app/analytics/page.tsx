@@ -297,20 +297,17 @@ function AnalyticsContent() {
   const [drillDownReviewFilter, setDrillDownReviewFilter] = useState<"all" | "reviewed" | "needs_reviewed">("all");
   const [selectedCall, setSelectedCall] = useState<CallDetail | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [contentWidth, setContentWidth] = useState(0);
+  const [isLargeScreen, setIsLargeScreen] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
   const callRowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
   const drillDownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const updateContentWidth = () => {
-      if (contentRef.current) {
-        setContentWidth(contentRef.current.offsetWidth);
-      }
-    };
-    updateContentWidth();
-    window.addEventListener("resize", updateContentWidth);
-    return () => window.removeEventListener("resize", updateContentWidth);
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => setIsLargeScreen(mql.matches);
+    setIsLargeScreen(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
   }, []);
 
   const fetchAnalytics = useCallback(async () => {
@@ -670,7 +667,7 @@ function AnalyticsContent() {
       ref={contentRef}
       className="flex flex-col h-screen transition-all duration-300"
       style={{
-        marginRight: isPanelOpen && contentWidth > 0 ? `${contentWidth * 0.5}px` : "0",
+        marginRight: isPanelOpen && isLargeScreen ? "calc(50vw - 1.5rem)" : "0",
       }}
     >
       <header className="sticky top-0 z-10 bg-white">
@@ -1066,7 +1063,7 @@ function AnalyticsContent() {
           const idx = selectedCall ? filteredDrillDownCalls.findIndex((c) => c.id === selectedCall.id) : -1;
           return idx >= 0 && idx < filteredDrillDownCalls.length - 1 ? () => { setSelectedCall(filteredDrillDownCalls[idx + 1] as CallDetail); } : undefined;
         })()}
-        contentWidth={contentWidth}
+        isLargeScreen={isLargeScreen}
         users={users}
         currentUser={user}
         practiceTeams={practiceTeams}

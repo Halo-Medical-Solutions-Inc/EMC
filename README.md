@@ -44,7 +44,7 @@ npm run dev
 
 ### Optional: Slack (Platform Support alerts)
 
-When set, new messages and thread replies in the **Platform Support** channel also post to a Slack channel (for example `#support`).
+When set, the same alert is posted to a Slack channel (for example `#support`) when: (1) someone sends a message or thread reply in **Platform Support**, or (2) a user whose email is **not** `@halohealth.app` sends a message in a **direct or group** conversation that includes at least one `@halohealth.app` member (incoming to Halo staff).
 
 
 | Variable                   | Description                                                                                                             |

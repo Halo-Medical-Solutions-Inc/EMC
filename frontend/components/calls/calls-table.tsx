@@ -17,6 +17,7 @@ import {
   formatCallTime,
   formatPhoneNumber,
 } from "@/lib/call-utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Call, CallStatus, ExtractionStatus } from "@/types/call";
 import { User } from "@/types/user";
@@ -215,7 +216,120 @@ export function CallsTable({
     );
   }
 
+  const isMobile = useIsMobile();
   const groupedCalls = groupCallsByDate(calls);
+
+  if (isMobile) {
+    return (
+      <div className="space-y-3">
+        {groupedCalls.map((group) => (
+          <div key={group.dateKey}>
+            <div className="px-1 py-2">
+              <span className="text-[13px] font-semibold text-neutral-700">
+                {group.dateLabel}
+              </span>
+              <span className="ml-1.5 text-[13px] font-normal text-neutral-500">
+                ({group.calls.length})
+              </span>
+            </div>
+            <div className="space-y-2">
+              {group.calls.map((call) => {
+                const patientName = getCallerName(call);
+                const phoneNumber = getPhoneNumber(call);
+                const duration = getDuration(call);
+                const priority = getPriority(call);
+                const summary = getSummary(call);
+                const timeStr = formatCallTime(call.created_at);
+                const isInProgress = call.status === CallStatus.IN_PROGRESS;
+
+                return (
+                  <div
+                    key={call.id}
+                    onClick={() => {
+                      if (!isInProgress) onSelectCall(call);
+                    }}
+                    className={cn(
+                      "rounded-lg border border-neutral-200 bg-white px-4 py-3",
+                      isInProgress
+                        ? "opacity-60"
+                        : "cursor-pointer active:bg-neutral-50",
+                      selectedCallId === call.id && isPanelOpen && "border-neutral-400 bg-neutral-50"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <div className="mt-1.5 shrink-0">
+                          {isInProgress ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+                          ) : (
+                            <div
+                              className={cn(
+                                "h-1.5 w-1.5 rounded-full",
+                                getPriorityIndicator(priority || "low")
+                              )}
+                            />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[14px] font-medium text-neutral-900 truncate">
+                            {patientName}
+                          </p>
+                          {phoneNumber && (
+                            <p className="text-[13px] text-neutral-500 tabular-nums">
+                              {formatPhoneNumber(phoneNumber)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-[13px] text-neutral-900">{timeStr}</p>
+                        {duration && (
+                          <p className="text-[12px] text-neutral-500">{duration}</p>
+                        )}
+                      </div>
+                    </div>
+                    {isExtractionPending(call) ? (
+                      <div className="mt-2 flex items-center gap-1.5 text-[13px] text-neutral-500">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Generating summary...</span>
+                      </div>
+                    ) : isExtractionFailed(call) ? (
+                      <p className="mt-2 text-[13px] text-red-600">
+                        Failed to generate summary
+                      </p>
+                    ) : (
+                      <p className="mt-2 line-clamp-2 text-[13px] text-neutral-600">
+                        {summary}
+                      </p>
+                    )}
+                    <div className="mt-2 flex items-center justify-between">
+                      <div />
+                      {!isInProgress && call.is_flagged ? (
+                        <span className="inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                          <CircleAlert className="h-3 w-3" />
+                          Flagged
+                        </span>
+                      ) : !isInProgress && call.is_reviewed ? (
+                        <span className="inline-flex items-center gap-1 rounded bg-green-900 px-2 py-0.5 text-[11px] font-medium text-white">
+                          <CheckCircle2 className="h-3 w-3" />
+                          {getReviewerLabel(call.reviewed_by, users)}
+                        </span>
+                      ) : !isInProgress ? (
+                        <span className="inline-flex items-center gap-1 rounded border border-neutral-200 px-2 py-0.5 text-[11px] font-medium text-neutral-600">
+                          <Circle className="h-3 w-3" strokeWidth={2} />
+                          Review
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border border-neutral-200 overflow-hidden bg-white">

@@ -17,6 +17,7 @@ from app.models.user import User, UserRole
 
 DEFAULT_CHANNEL_NAME = "Eye Medical Center"
 SUPPORT_CHANNEL_NAME = "Platform Support"
+HALOHEALTH_EMAIL_SUFFIX = "@halohealth.app"
 
 
 async def get_conversations_for_user(
@@ -476,6 +477,38 @@ async def is_support_channel(
         )
     )
     return result.scalar_one_or_none() is not None
+
+
+def _email_is_halohealth(email: Optional[str]) -> bool:
+    if not email or not email.strip():
+        return False
+    return email.strip().lower().endswith(HALOHEALTH_EMAIL_SUFFIX)
+
+
+async def should_slack_notify_halohealth_dm(
+    db: AsyncSession,
+    conversation_id: uuid.UUID,
+    sender_id: uuid.UUID,
+) -> bool:
+    conv = await get_conversation_by_id(db, conversation_id)
+    if conv is None:
+        return False
+    if conv.type not in (ConversationType.DIRECT, ConversationType.GROUP):
+        return False
+    sender = await db.get(User, sender_id)
+    if sender is None or sender.deleted_at is not None:
+        return False
+    if _email_is_halohealth(sender.email):
+        return False
+    for m in conv.members:
+        if m.user_id == sender_id:
+            continue
+        u = m.user
+        if u is None or u.deleted_at is not None:
+            continue
+        if _email_is_halohealth(u.email):
+            return True
+    return False
 
 
 async def has_super_admin_member(

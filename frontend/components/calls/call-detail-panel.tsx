@@ -2,7 +2,22 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { AlertCircle, Archive, ArrowUp, CheckCircle2, ChevronDown, ChevronUp, CircleAlert, Circle, ChevronsUpDown, MoreHorizontal, Trash2, Users, X, XCircle } from "lucide-react";
+import {
+  AlertCircle,
+  Archive,
+  ArrowUp,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  ChevronsUpDown,
+  Circle,
+  CircleAlert,
+  MoreHorizontal,
+  Trash2,
+  Users,
+  X,
+  XCircle,
+} from "lucide-react";
 
 import {
   AlertDialog,
@@ -33,6 +48,7 @@ import {
 } from "@/components/ui/popover";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import CommentContent from "@/components/calls/comment-content";
 import MentionInput from "@/components/calls/mention-input";
 import {
@@ -60,7 +76,7 @@ interface CallDetailPanelProps {
   onDeleteCall: (callId: string) => Promise<void>;
   onNavigatePrev?: () => void;
   onNavigateNext?: () => void;
-  contentWidth: number;
+  isLargeScreen: boolean;
   users: User[];
   currentUser: User | null;
   practiceTeams: Team[];
@@ -77,11 +93,12 @@ export function CallDetailPanel({
   onDeleteCall,
   onNavigatePrev,
   onNavigateNext,
-  contentWidth,
+  isLargeScreen,
   users,
   currentUser,
   practiceTeams,
 }: CallDetailPanelProps) {
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<"overview" | "admin">("overview");
   const [comments, setComments] = useState<CallComment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -250,24 +267,73 @@ export function CallDetailPanel({
 
   const transferInfo = extractTransferInfo(call.vapi_data);
 
+  const headerDurationSeconds =
+    call.display_data?.duration_seconds ??
+    call.vapi_data?.call?.durationSeconds ??
+    call.vapi_data?.durationSeconds;
+
+  let headerDurationStr = "";
+  if (
+    headerDurationSeconds !== undefined &&
+    headerDurationSeconds !== null &&
+    headerDurationSeconds > 0
+  ) {
+    if (headerDurationSeconds < 60) {
+      headerDurationStr = `${Math.round(headerDurationSeconds)}s`;
+    } else {
+      const minutes = Math.floor(headerDurationSeconds / 60);
+      const seconds = Math.round(headerDurationSeconds % 60);
+      headerDurationStr = `${minutes}m ${seconds}s`;
+    }
+  }
+
+  const headerSubline =
+    headerDurationStr !== ""
+      ? `${formatCallDateTime(call.created_at)} · ${headerDurationStr}`
+      : formatCallDateTime(call.created_at);
+
+  const panelIsFullScreen = isMobile || !isLargeScreen;
+  const phoneInline = !panelIsFullScreen;
+
   return (
     <div
-      className="fixed right-0 top-0 z-50 w-full max-w-full animate-in slide-in-from-right duration-300 border-l border-neutral-200 bg-white"
+      className="fixed right-0 top-0 z-50 animate-in slide-in-from-right duration-300 border-l border-neutral-200 bg-white"
       style={{
         height: "100vh",
-        width: contentWidth > 0 ? `${contentWidth * 0.5}px` : "50%",
+        width: panelIsFullScreen ? "calc(100% - 3rem)" : "calc(50vw - 1.5rem)",
       }}
     >
       <div className="relative flex h-full flex-col bg-white">
         <div className="sticky top-0 z-10 bg-neutral-50">
-          <div className="flex items-center justify-between border-b border-neutral-200 bg-neutral-50 px-4 py-6 lg:px-6">
-            <div className="flex-1">
-              <h3 className="text-base font-semibold text-neutral-900 lg:text-lg">
-                {headerName} -{" "}
-                {phoneNumber ? formatPhoneNumber(phoneNumber) : "No Number"}
-              </h3>
+          <div className="flex items-start justify-between gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-5 lg:px-6 lg:py-6">
+            <div className="min-w-0 flex-1">
+              {phoneInline ? (
+                <>
+                  <h3 className="flex min-w-0 items-baseline gap-x-2 text-lg leading-tight tracking-tight text-neutral-900 lg:text-xl">
+                    <span className="truncate font-semibold">{headerName}</span>
+                    <span className="shrink-0 font-normal text-neutral-300">·</span>
+                    <span className="shrink-0 text-sm font-normal tabular-nums text-neutral-500 lg:text-base">
+                      {phoneNumber ? formatPhoneNumber(phoneNumber) : "No phone number"}
+                    </span>
+                  </h3>
+                  <p className="mt-1 min-w-0 truncate text-[11px] leading-snug tabular-nums text-neutral-400 lg:text-xs">
+                    {headerSubline}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="truncate text-lg font-semibold leading-tight tracking-tight text-neutral-900 lg:text-xl">
+                    {headerName}
+                  </h3>
+                  <p className="mt-1 min-w-0 truncate text-[11px] leading-snug tabular-nums text-neutral-400 lg:text-xs">
+                    {phoneNumber ? formatPhoneNumber(phoneNumber) : "No phone number"}
+                    <span className="mx-1.5">·</span>
+                    {headerSubline}
+                  </p>
+                </>
+              )}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1 pt-0.5">
               <Button
                 variant="ghost"
                 size="sm"

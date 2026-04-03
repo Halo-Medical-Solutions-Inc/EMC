@@ -32,7 +32,7 @@ export default function SearchPage() {
   const [handledCallParam, setHandledCallParam] = useState<string | null>(null);
   const [urlQueryHandled, setUrlQueryHandled] = useState(false);
   const [urlCallLoading, setUrlCallLoading] = useState(false);
-  const [contentWidth, setContentWidth] = useState(0);
+  const [isLargeScreen, setIsLargeScreen] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
   const callRowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
 
@@ -113,14 +113,11 @@ export default function SearchPage() {
   }, [isPanelOpen, selectedCall]);
 
   useEffect(() => {
-    const updateContentWidth = () => {
-      if (contentRef.current) {
-        setContentWidth(contentRef.current.offsetWidth);
-      }
-    };
-    updateContentWidth();
-    window.addEventListener("resize", updateContentWidth);
-    return () => window.removeEventListener("resize", updateContentWidth);
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => setIsLargeScreen(mql.matches);
+    setIsLargeScreen(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
   }, []);
 
   const handleSearch = async () => {
@@ -351,7 +348,7 @@ export default function SearchPage() {
       ref={contentRef}
       className="flex flex-col h-screen transition-all duration-300"
       style={{
-        marginRight: isPanelOpen && contentWidth > 0 ? `${contentWidth * 0.5}px` : "0",
+        marginRight: isPanelOpen && isLargeScreen ? "calc(50vw - 1.5rem)" : "0",
       }}
     >
       <header className="sticky top-0 z-10 border-b border-neutral-100 bg-white">
@@ -462,7 +459,7 @@ export default function SearchPage() {
           const idx = selectedCall ? calls.findIndex((c) => c.id === selectedCall.id) : -1;
           return idx >= 0 && idx < calls.length - 1 ? () => { setSelectedCall(calls[idx + 1]); setIsPanelOpen(true); } : undefined;
         })()}
-        contentWidth={contentWidth}
+        isLargeScreen={isLargeScreen}
         users={users}
         currentUser={user}
         practiceTeams={practiceTeams}
