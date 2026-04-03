@@ -1,4 +1,4 @@
-import { AppDispatch } from "./index";
+import { AppDispatch, RootState } from "./index";
 import { addCall, updateCall, callDeleted } from "./slices/calls-slice";
 import { incrementUnreadCount } from "./slices/mentions-slice";
 import {
@@ -17,6 +17,7 @@ import {
 } from "./slices/messages-slice";
 import { practiceUpdated } from "./slices/practice-slice";
 import { userCreated, userUpdated, userDeleted } from "./slices/users-slice";
+import { playNotificationSound } from "@/lib/notification-sound";
 import { CallDetail } from "@/types/call";
 import { Invitation } from "@/types/invitation";
 import { ChatMessage, Conversation } from "@/types/message";
@@ -28,18 +29,55 @@ interface WebSocketEvent {
   data: unknown;
 }
 
+const dingedCallIds = new Set<string>();
+
+function shouldDingForCall(
+  call: Partial<CallDetail> & { id: string },
+  getState: () => RootState,
+): boolean {
+  if (document.visibilityState !== "hidden") return false;
+  if (call.extraction_status !== "COMPLETED") return false;
+  if (call.is_reviewed) return false;
+  if (dingedCallIds.has(call.id)) return false;
+
+  const state = getState();
+  const user = state.auth.user;
+  if (!user) return false;
+
+  const teams = state.practice.practice?.teams?.teams ?? [];
+  const callTeams =
+    call.display_data?.call_teams ??
+    call.extraction_data?.call_teams ??
+    [];
+
+  if (callTeams.length === 0) return true;
+
+  const userTeamTitles = teams
+    .filter((t) => t.members.includes(user.id))
+    .map((t) => t.title);
+
+  return callTeams.some((ct) => userTeamTitles.includes(ct));
+}
+
 export function handleWebSocketEvent(
   event: WebSocketEvent,
-  dispatch: AppDispatch
+  dispatch: AppDispatch,
+  getState: () => RootState,
 ): void {
   switch (event.type) {
     case "call_created":
       dispatch(addCall(event.data as CallDetail));
       break;
 
-    case "call_updated":
-      dispatch(updateCall(event.data as Partial<CallDetail> & { id: string }));
+    case "call_updated": {
+      const callData = event.data as Partial<CallDetail> & { id: string };
+      dispatch(updateCall(callData));
+      if (shouldDingForCall(callData, getState)) {
+        dingedCallIds.add(callData.id);
+        playNotificationSound();
+      }
       break;
+    }
 
     case "call_deleted":
       dispatch(callDeleted((event.data as { id: string }).id));

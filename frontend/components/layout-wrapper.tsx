@@ -5,7 +5,7 @@ import { useCallback, useEffect } from "react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { store, useAppDispatch, useAppSelector } from "@/store";
 import { fetchUsers } from "@/store/slices/users-slice";
 import { fetchInvitations } from "@/store/slices/invitations-slice";
 import { fetchUnreadMentionCount } from "@/store/slices/mentions-slice";
@@ -55,7 +55,8 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         websocketClient.onMessage((event) => {
           handleWebSocketEvent(
             event as { type: string; data: unknown },
-            dispatch
+            dispatch,
+            () => store.getState(),
           );
         });
         websocketClient.onReconnect(resyncData);
