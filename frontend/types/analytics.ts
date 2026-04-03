@@ -23,6 +23,7 @@ export interface SankeyByDoctor {
   transferred: number;
   transferred_extensions: Record<string, number>;
   non_transferred_doctors: Record<string, number>;
+  all_doctors: Record<string, number>;
 }
 
 export interface SankeyData {

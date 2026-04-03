@@ -211,6 +211,7 @@ async def get_analytics(
     doctor_stats: Dict[str, List[Dict[str, Any]]] = {}
     non_transferred_intent_counts: Dict[str, int] = {}
     non_transferred_doctor_counts: Dict[str, int] = {}
+    all_doctor_counts: Dict[str, int] = {}
     transferred_extension_counts: Dict[str, int] = {}
     transferred_count = 0
     auto_reviewed_count = 0
@@ -273,6 +274,8 @@ async def get_analytics(
         if is_auto_reviewed:
             auto_reviewed_count += 1
 
+        all_doctor_counts[provider] = all_doctor_counts.get(provider, 0) + 1
+
         if not was_transferred:
             non_transferred_doctor_counts[provider] = (
                 non_transferred_doctor_counts.get(provider, 0) + 1
@@ -312,6 +315,7 @@ async def get_analytics(
             transferred=transferred_count,
             transferred_extensions=transferred_extension_counts,
             non_transferred_doctors=non_transferred_doctor_counts,
+            all_doctors=all_doctor_counts,
         ),
     )
 
@@ -331,15 +335,18 @@ async def get_analytics(
             round(sum(doc_review_times) / len(doc_review_times), 1) if doc_review_times else None
         )
 
-        reviewer_counts: Dict[uuid.UUID, int] = {}
+        reviewer_counts: Dict[Optional[uuid.UUID], int] = {}
         for c in doc_data:
-            rid = c.get("reviewed_by")
-            if rid and c["is_reviewed"]:
+            if c["is_reviewed"]:
+                rid = c.get("reviewed_by")
                 reviewer_counts[rid] = reviewer_counts.get(rid, 0) + 1
 
         performers: List[PerformerStats] = []
         for rid, count in sorted(reviewer_counts.items(), key=lambda x: x[1], reverse=True):
-            name = user_name_map.get(rid, "Unknown")
+            if rid is None:
+                name = "Auto-Review"
+            else:
+                name = user_name_map.get(rid, "Unknown")
             pct = round((count / doc_reviewed * 100) if doc_reviewed > 0 else 0.0, 1)
             performers.append(PerformerStats(user_name=name, reviews=count, percentage=pct))
 
@@ -406,8 +413,6 @@ async def get_sankey_calls(
                 matched.append(call)
 
         elif filter_type == "doctor":
-            if was_transferred:
-                continue
             provider = _get_provider_name(extraction_data, vapi_data)
             if provider == filter_value:
                 matched.append(call)

@@ -11,7 +11,8 @@ import { toast } from "sonner";
 import apiClient from "@/lib/api-client";
 import { ApiResponse } from "@/types/api";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Sparkles } from "lucide-react";
+import { Search, Loader2, Sparkles, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
@@ -321,6 +322,16 @@ export default function SearchPage() {
         return;
       }
 
+      const active = document.activeElement;
+      if (
+        active &&
+        (active.tagName === "INPUT" ||
+          active.tagName === "TEXTAREA" ||
+          (active as HTMLElement).isContentEditable)
+      ) {
+        return;
+      }
+
       if (!isPanelOpen || !selectedCall) return;
 
       const currentIndex = calls.findIndex((c) => c.id === selectedCall.id);
@@ -352,33 +363,39 @@ export default function SearchPage() {
       }}
     >
       <header className="sticky top-0 z-10 border-b border-neutral-100 bg-white">
-        <div className="px-10 py-8">
-          <div className="mb-6 flex items-start justify-between">
-            <div className="flex-1">
-              <h1 className="text-[24px] font-semibold tracking-tight text-neutral-900">Search</h1>
-              <p className="mt-1 text-[15px] text-neutral-500">
-                Search across all calls by phone number, name, or any details.
-              </p>
-            </div>
+        <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-neutral-900">Search</h1>
+            <p className="mt-1 text-[13px] sm:text-[15px] text-neutral-500">
+              Search across all calls by phone number, name, or details
+            </p>
           </div>
 
-          <div className="flex gap-3">
-            <div className="relative flex-1">
+          <div className="flex gap-2 sm:gap-3">
+            <div className="relative min-w-0 flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
               <Input
                 type="text"
-                placeholder="Search by phone number, patient name, summary..."
+                placeholder="Phone, name, summary..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="pl-9 h-9 border-neutral-200 bg-white"
+                className={cn("pl-9 h-8 border-neutral-200 bg-white text-neutral-600 md:h-9 md:text-neutral-900", searchQuery && "pr-8")}
                 disabled={isSearching}
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
             <Button
               onClick={handleSearch}
               disabled={isSearching || !searchQuery.trim()}
-              className="h-9 px-6 rounded-none bg-neutral-900 text-white hover:bg-neutral-800"
+              className="h-8 px-4 sm:h-9 sm:px-6 rounded-none bg-neutral-900 text-white hover:bg-neutral-800 text-[13px]"
             >
               {isSearching ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -390,7 +407,7 @@ export default function SearchPage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-10 py-6 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide sm:px-6 sm:py-6 lg:px-10">
         {!hasSearched ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Search className="h-8 w-8 text-neutral-200 mb-4" />

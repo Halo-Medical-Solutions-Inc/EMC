@@ -44,14 +44,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { PageSpinner } from "@/components/ui/page-spinner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
@@ -234,32 +226,16 @@ function buildSankeyDataByDoctor(
 
   nodes.push({ id: "total", label: "All Calls", value: sankey.total, layer: 0, color: TOTAL_COLOR });
 
-  if (sankey.transferred > 0) {
-    nodes.push({ id: "transferred", label: "Transferred", value: sankey.transferred, layer: 1, color: TRANSFERRED_COLOR });
-    links.push({ source: "total", target: "transferred", value: sankey.transferred });
-  }
-
-  const sortedNonTransferred = Object.entries(sankey.non_transferred_doctors)
+  const sortedDoctors = Object.entries(sankey.all_doctors)
     .filter(([, c]) => c > 0)
     .sort((a, b) => b[1] - a[1]);
 
-  sortedNonTransferred.forEach(([doctor, count], idx) => {
+  sortedDoctors.forEach(([doctor, count], idx) => {
     const color = INTENT_COLORS[idx % INTENT_COLORS.length];
-    nodes.push({ id: `nt_${idx}`, label: doctor, value: count, layer: 1, color });
-    links.push({ source: "total", target: `nt_${idx}`, value: count });
+    const nodeId = `doc_${idx}`;
+    nodes.push({ id: nodeId, label: doctor, value: count, layer: 1, color });
+    links.push({ source: "total", target: nodeId, value: count });
   });
-
-  if (sankey.transferred > 0) {
-    const sortedExtensions = Object.entries(sankey.transferred_extensions)
-      .filter(([, c]) => c > 0)
-      .sort((a, b) => b[1] - a[1]);
-
-    sortedExtensions.forEach(([extension, count], idx) => {
-      const color = INTENT_COLORS[idx % INTENT_COLORS.length];
-      nodes.push({ id: `tr_${idx}`, label: extension, value: count, layer: 2, color });
-      links.push({ source: "transferred", target: `tr_${idx}`, value: count });
-    });
-  }
 
   return { nodes, links };
 }
@@ -288,7 +264,7 @@ function AnalyticsContent() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<SortField>("total_calls");
+  const [sortBy, setSortBy] = useState<SortField>("needs_review");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const [callFlowTab, setCallFlowTab] = useState<string>("by_intent");
@@ -988,43 +964,85 @@ function AnalyticsContent() {
             <div>
               <h2 className="text-[15px] font-semibold text-neutral-900 mb-4">Doctor Breakdown</h2>
 
-              <div className="sm:hidden border border-neutral-200 bg-white">
+
+              <div className="border border-neutral-200 bg-white">
+                <div className="flex items-center gap-3 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
+                  <button onClick={() => handleSort("doctor_name")} className="text-[12px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">
+                    Name <SortIcon column="doctor_name" sortBy={sortBy} sortOrder={sortOrder} />
+                  </button>
+                  <button onClick={() => handleSort("total_calls")} className="text-[12px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">
+                    Calls <SortIcon column="total_calls" sortBy={sortBy} sortOrder={sortOrder} />
+                  </button>
+                  <button onClick={() => handleSort("review_completion_rate")} className="text-[12px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">
+                    Review Rate <SortIcon column="review_completion_rate" sortBy={sortBy} sortOrder={sortOrder} />
+                  </button>
+                  <button onClick={() => handleSort("avg_review_time_minutes")} className="text-[12px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">
+                    Avg Time <SortIcon column="avg_review_time_minutes" sortBy={sortBy} sortOrder={sortOrder} />
+                  </button>
+                </div>
                 {sortedDoctors.length === 0 ? (
-                  <div className="p-6 text-center text-neutral-500 text-[13px]">
+                  <div className="px-4 py-8 text-center text-neutral-500 text-[13px]">
                     No data available for this period
                   </div>
                 ) : (
                   <div className="divide-y divide-neutral-100">
                     {sortedDoctors.map((doctor) => {
                       const reviewPct = Math.round(doctor.review_completion_rate * 100);
+                      const reviewers = doctor.performers
+                        .map((p) => ({
+                          name: p.user_name === "Auto-Review" ? "Auto-Review" : p.user_name.split(/\s+/)[0],
+                          reviews: p.reviews,
+                          isAuto: p.user_name === "Auto-Review",
+                        }))
+                        .sort((a, b) => {
+                          if (a.isAuto && !b.isAuto) return 1;
+                          if (!a.isAuto && b.isAuto) return -1;
+                          return b.reviews - a.reviews;
+                        });
+
                       return (
                         <div
                           key={doctor.doctor_name}
-                          className={cn("px-4 py-3", period === "1d" && "cursor-pointer hover:bg-neutral-50 active:bg-neutral-100 transition-colors")}
+                          className={cn(
+                            "px-4 py-3 transition-colors",
+                            period === "1d" && "cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+                          )}
                           onClick={period === "1d" ? () => handleDoctorRowClick(doctor.doctor_name) : undefined}
                         >
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[13px] font-semibold text-neutral-900 truncate">{doctor.doctor_name}</span>
-                            <span className="shrink-0 text-[14px] font-bold tabular-nums text-neutral-900 ml-3">{doctor.total_calls}</span>
+                            <span className="text-[13px] font-semibold text-neutral-900">{doctor.doctor_name}</span>
+                            <span className="text-[14px] font-bold tabular-nums text-neutral-900">{doctor.total_calls} <span className="text-[11px] font-normal text-neutral-400">calls</span></span>
                           </div>
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2.5 mb-1.5">
                             <div className="h-1.5 flex-1 rounded-full bg-neutral-100 overflow-hidden">
                               <div
                                 className="h-full rounded-full bg-emerald-500 transition-all"
                                 style={{ width: `${reviewPct}%` }}
                               />
                             </div>
-                            <span className="shrink-0 text-[11px] tabular-nums text-neutral-500">{reviewPct}%</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-[11px] text-neutral-400">
+                            <span className="shrink-0 text-[12px] font-semibold tabular-nums text-neutral-700">{doctor.reviewed}/{doctor.total_calls}</span>
+                            <span className="shrink-0 text-[11px] tabular-nums text-neutral-400">{reviewPct}%</span>
                             {doctor.needs_review > 0 && (
-                              <span className="text-amber-600 font-medium">{doctor.needs_review} needs review</span>
+                              <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
+                                {doctor.needs_review} pending
+                              </span>
                             )}
-                            <span>
-                              {doctor.avg_review_time_minutes !== null
-                                ? `Avg ${formatReviewTime(doctor.avg_review_time_minutes)}`
-                                : "No reviews"}
-                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-neutral-400">
+                            {doctor.avg_review_time_minutes !== null && (
+                              <span>{formatReviewTime(doctor.avg_review_time_minutes)} avg</span>
+                            )}
+                            {reviewers.length > 0 && (
+                              <span>
+                                {reviewers.map((r, i) => (
+                                  <span key={r.name}>
+                                    {i > 0 && ", "}
+                                    <span className={r.isAuto ? "text-neutral-400" : "text-neutral-500"}>{r.name}</span>
+                                    <span className="tabular-nums"> {r.reviews}</span>
+                                  </span>
+                                ))}
+                              </span>
+                            )}
                           </div>
                         </div>
                       );
@@ -1032,105 +1050,6 @@ function AnalyticsContent() {
                   </div>
                 )}
               </div>
-
-              <TooltipProvider delayDuration={200}>
-                <div className="hidden sm:block border border-neutral-200 bg-white overflow-x-auto">
-                  <Table style={{ tableLayout: "fixed", minWidth: "650px", width: "100%" }}>
-                    <colgroup>
-                      <col style={{ width: "30%" }} />
-                      <col style={{ width: "14%" }} />
-                      <col style={{ width: "16%" }} />
-                      <col style={{ width: "16%" }} />
-                      <col style={{ width: "24%" }} />
-                    </colgroup>
-                    <TableHeader>
-                      <TableRow className="bg-neutral-50 hover:bg-neutral-50">
-                        <TableHead
-                          className="text-neutral-700 px-4 py-3 cursor-pointer hover:bg-neutral-100 text-[13px] font-medium"
-                          onClick={() => handleSort("doctor_name")}
-                        >
-                          Doctor
-                          <SortIcon column="doctor_name" sortBy={sortBy} sortOrder={sortOrder} />
-                        </TableHead>
-                        <TableHead
-                          className="text-neutral-700 px-4 py-3 cursor-pointer hover:bg-neutral-100 text-[13px] font-medium"
-                          onClick={() => handleSort("total_calls")}
-                        >
-                          Calls
-                          <SortIcon column="total_calls" sortBy={sortBy} sortOrder={sortOrder} />
-                        </TableHead>
-                        <TableHead
-                          className="text-neutral-700 px-4 py-3 cursor-pointer hover:bg-neutral-100 text-[13px] font-medium"
-                          onClick={() => handleSort("needs_review")}
-                        >
-                          Needs Review
-                          <SortIcon column="needs_review" sortBy={sortBy} sortOrder={sortOrder} />
-                        </TableHead>
-                        <TableHead
-                          className="text-neutral-700 px-4 py-3 cursor-pointer hover:bg-neutral-100 text-[13px] font-medium"
-                          onClick={() => handleSort("review_completion_rate")}
-                        >
-                          Review Rate
-                          <SortIcon column="review_completion_rate" sortBy={sortBy} sortOrder={sortOrder} />
-                        </TableHead>
-                        <TableHead
-                          className="text-neutral-700 px-4 py-3 cursor-pointer hover:bg-neutral-100 text-[13px] font-medium"
-                          onClick={() => handleSort("avg_review_time_minutes")}
-                        >
-                          Avg Review Time
-                          <SortIcon column="avg_review_time_minutes" sortBy={sortBy} sortOrder={sortOrder} />
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sortedDoctors.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center text-neutral-500 py-8">
-                            No data available for this period
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        <>
-                          {sortedDoctors.map((doctor) => (
-                            <DoctorRow key={doctor.doctor_name} doctor={doctor} onClick={period === "1d" ? () => handleDoctorRowClick(doctor.doctor_name) : undefined} />
-                          ))}
-                          <TableRow className="bg-neutral-50 hover:bg-neutral-50 border-t-2 border-neutral-200">
-                            <TableCell className="px-4 py-3">
-                              <span className="font-semibold text-neutral-900 text-[13px]">Total</span>
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-neutral-900 font-semibold text-[13px]">
-                              {sortedDoctors.reduce((sum, d) => sum + d.total_calls, 0).toLocaleString()}
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-neutral-600 text-[13px] font-medium">
-                              {sortedDoctors.reduce((sum, d) => sum + d.needs_review, 0)}
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-neutral-600 text-[13px] font-medium">
-                              {sortedDoctors.length > 0
-                                ? `${(
-                                    (sortedDoctors.reduce((sum, d) => sum + d.reviewed, 0) /
-                                      Math.max(1, sortedDoctors.reduce((sum, d) => sum + d.total_calls, 0))) *
-                                    100
-                                  ).toFixed(0)}%`
-                                : "—"}
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-neutral-600 text-[13px] font-medium">
-                              {(() => {
-                                const withTime = sortedDoctors.filter((d) => d.avg_review_time_minutes != null);
-                                const totalWeighted = withTime.reduce(
-                                  (sum, d) => sum + (d.avg_review_time_minutes ?? 0) * d.total_calls,
-                                  0
-                                );
-                                const totalCalls = withTime.reduce((sum, d) => sum + d.total_calls, 0);
-                                return totalCalls > 0 ? formatReviewTime(totalWeighted / totalCalls) : "—";
-                              })()}
-                            </TableCell>
-                          </TableRow>
-                        </>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </TooltipProvider>
             </div>
           </div>
         ) : null}
@@ -1199,70 +1118,6 @@ function SortIcon({
   );
 }
 
-function DoctorRow({ doctor, onClick }: { doctor: DoctorBreakdownItem; onClick?: () => void }) {
-  const reviewPercent = (doctor.review_completion_rate * 100).toFixed(0);
-
-  const allReviewers = doctor.performers
-    .map((p) => ({
-      name: p.user_name === "Auto-Review" ? "Auto-Review" : p.user_name.split(/\s+/)[0],
-      reviews: p.reviews,
-      percentage: p.percentage,
-      isAuto: p.user_name === "Auto-Review",
-    }))
-    .sort((a, b) => {
-      if (a.isAuto && !b.isAuto) return 1;
-      if (!a.isAuto && b.isAuto) return -1;
-      return b.reviews - a.reviews;
-    });
-
-  const hasData = allReviewers.length > 0 || doctor.total_calls > 0;
-
-  return (
-    <TableRow className={cn("hover:bg-neutral-50", onClick && "cursor-pointer")} onClick={onClick}>
-      <TableCell className="px-4 py-3">
-        <span className="font-medium text-neutral-900 text-[13px]">{doctor.doctor_name}</span>
-      </TableCell>
-      <TableCell className="px-4 py-3 text-neutral-900 font-medium text-[13px]">
-        {doctor.total_calls.toLocaleString()}
-      </TableCell>
-      <TableCell className="px-4 py-3 text-neutral-600 text-[13px]">
-        {doctor.needs_review}
-      </TableCell>
-      <TableCell className="px-4 py-3">
-        {hasData ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-neutral-600 text-[13px] cursor-default border-b border-dashed border-neutral-300">
-                {reviewPercent}%
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" align="start" className="p-0">
-              <div className="px-3 py-2 space-y-1.5">
-                <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">Reviewed by</p>
-                {allReviewers.map((r) => (
-                  <div key={r.name} className="flex items-center justify-between gap-4 text-[12px]">
-                    <span className="text-neutral-200">{r.name}</span>
-                    <span className="text-neutral-400 tabular-nums">{r.reviews} ({r.percentage}%)</span>
-                  </div>
-                ))}
-                {allReviewers.length === 0 && (
-                  <p className="text-[11px] text-neutral-400">No reviews yet</p>
-                )}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <span className="text-neutral-600 text-[13px]">{reviewPercent}%</span>
-        )}
-      </TableCell>
-      <TableCell className="px-4 py-3 text-neutral-600 text-[13px]">
-        {doctor.avg_review_time_minutes !== null
-          ? formatReviewTime(doctor.avg_review_time_minutes)
-          : "—"}
-      </TableCell>
-    </TableRow>
-  );
-}
 
 export default function AnalyticsPage() {
   return (

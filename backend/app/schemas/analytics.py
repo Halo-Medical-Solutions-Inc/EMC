@@ -28,6 +28,7 @@ class SankeyByDoctor(BaseModel):
     transferred: int
     transferred_extensions: Dict[str, int]
     non_transferred_doctors: Dict[str, int]
+    all_doctors: Dict[str, int]
 
 
 class SankeyData(BaseModel):
