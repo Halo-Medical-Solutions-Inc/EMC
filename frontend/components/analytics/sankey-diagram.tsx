@@ -160,17 +160,21 @@ export function SankeyDiagram({
   nodes,
   links,
   onNodeClick,
+  selectedNodeId,
 }: {
   nodes: SankeyNode[];
   links: SankeyLink[];
   onNodeClick?: (node: SankeyNode) => void;
+  selectedNodeId?: string | null;
 }) {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [internalSelected, setInternalSelected] = useState<string | null>(null);
 
   useEffect(() => {
-    setSelectedNode(null);
+    setInternalSelected(null);
   }, [nodes, links]);
+
+  const selectedNode = selectedNodeId ?? internalSelected;
 
   const { positionedNodes, positionedLinks } = useMemo(
     () => computeLayout(nodes, links),
@@ -203,7 +207,7 @@ export function SankeyDiagram({
         viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
         className="w-full h-full cursor-default"
         preserveAspectRatio="xMidYMid meet"
-        onClick={() => setSelectedNode(null)}
+        onClick={() => setInternalSelected(null)}
       >
         {positionedLinks.map((link, i) => {
           const isHighlightedByHover =
@@ -219,7 +223,7 @@ export function SankeyDiagram({
               key={`link-${i}`}
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedNode(link.targetNode.id);
+                setInternalSelected(link.targetNode.id);
                 if (onNodeClick && isLeafNode(link.targetNode.id)) {
                   onNodeClick(link.targetNode);
                 }
@@ -276,7 +280,7 @@ export function SankeyDiagram({
               onMouseLeave={() => setHoveredNode(null)}
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedNode(node.id);
+                setInternalSelected(node.id);
                 if (isClickable) onNodeClick(node);
               }}
               className="cursor-pointer"

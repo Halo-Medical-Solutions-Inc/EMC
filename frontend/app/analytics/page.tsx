@@ -11,7 +11,7 @@ import {
   ChevronUp,
   Circle,
   Clock,
-  Filter,
+  List,
   Loader2,
   Phone,
   RefreshCw,
@@ -291,6 +291,8 @@ function AnalyticsContent() {
   const [sortBy, setSortBy] = useState<SortField>("total_calls");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  const [callFlowTab, setCallFlowTab] = useState<string>("by_intent");
+  const [selectedSankeyNodeId, setSelectedSankeyNodeId] = useState<string | null>(null);
   const [drillDown, setDrillDown] = useState<DrillDownState | null>(null);
   const [drillDownCalls, setDrillDownCalls] = useState<Call[]>([]);
   const [drillDownLoading, setDrillDownLoading] = useState(false);
@@ -480,6 +482,7 @@ function AnalyticsContent() {
       };
 
       setDrillDown(newDrillDown);
+      setSelectedSankeyNodeId(node.id);
       setDrillDownLoading(true);
       setDrillDownCalls([]);
       setDrillDownSearch("");
@@ -511,6 +514,20 @@ function AnalyticsContent() {
       }
     },
     [period, offset],
+  );
+
+  const handleDoctorRowClick = useCallback(
+    (doctorName: string) => {
+      if (period !== "1d") return;
+      setCallFlowTab("by_doctor");
+      const node = sankeyDataByDoctor.nodes.find((n) => n.label === doctorName);
+      if (node) {
+        setTimeout(() => {
+          handleSankeyNodeClick(node, "by_doctor");
+        }, 150);
+      }
+    },
+    [period, sankeyDataByDoctor.nodes, handleSankeyNodeClick],
   );
 
   const handleSelectCall = useCallback((call: Call) => {
@@ -628,6 +645,7 @@ function AnalyticsContent() {
 
   const handleCloseDrillDown = () => {
     setDrillDown(null);
+    setSelectedSankeyNodeId(null);
     setDrillDownCalls([]);
     setDrillDownSearch("");
     setDrillDownReviewFilter("all");
@@ -840,7 +858,7 @@ function AnalyticsContent() {
 
             <div className="border border-neutral-200 bg-white p-3 sm:p-4 md:p-6">
               <h2 className="text-[15px] font-semibold text-neutral-900 mb-4">Call Flow</h2>
-              <Tabs defaultValue="by_intent" onValueChange={() => handleCloseDrillDown()}>
+              <Tabs value={callFlowTab} onValueChange={(v) => { setCallFlowTab(v); handleCloseDrillDown(); }}>
                 <TabsList>
                   <TabsTrigger value="by_intent">By Intent</TabsTrigger>
                   <TabsTrigger value="by_doctor">By Doctor</TabsTrigger>
@@ -851,6 +869,7 @@ function AnalyticsContent() {
                       nodes={sankeyDataByIntent.nodes}
                       links={sankeyDataByIntent.links}
                       onNodeClick={period === "1d" ? (node) => handleSankeyNodeClick(node, "by_intent") : undefined}
+                      selectedNodeId={callFlowTab === "by_intent" ? selectedSankeyNodeId : null}
                     />
                   </div>
                   <div className="sm:hidden">
@@ -858,6 +877,7 @@ function AnalyticsContent() {
                       nodes={sankeyDataByIntent.nodes}
                       links={sankeyDataByIntent.links}
                       onNodeClick={period === "1d" ? (node) => handleSankeyNodeClick(node, "by_intent") : undefined}
+                      selectedNodeId={callFlowTab === "by_intent" ? selectedSankeyNodeId : null}
                     />
                   </div>
                 </TabsContent>
@@ -867,6 +887,7 @@ function AnalyticsContent() {
                       nodes={sankeyDataByDoctor.nodes}
                       links={sankeyDataByDoctor.links}
                       onNodeClick={period === "1d" ? (node) => handleSankeyNodeClick(node, "by_doctor") : undefined}
+                      selectedNodeId={callFlowTab === "by_doctor" ? selectedSankeyNodeId : null}
                     />
                   </div>
                   <div className="sm:hidden">
@@ -874,17 +895,18 @@ function AnalyticsContent() {
                       nodes={sankeyDataByDoctor.nodes}
                       links={sankeyDataByDoctor.links}
                       onNodeClick={period === "1d" ? (node) => handleSankeyNodeClick(node, "by_doctor") : undefined}
+                      selectedNodeId={callFlowTab === "by_doctor" ? selectedSankeyNodeId : null}
                     />
                   </div>
                 </TabsContent>
               </Tabs>
 
               {drillDown && (
-                <div ref={drillDownRef} className="mt-6 border-t border-neutral-200 pt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[14px] font-semibold text-neutral-900">
+                <div ref={drillDownRef} className="mt-4 sm:mt-6 border-t border-neutral-200 pt-4 sm:pt-6">
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <h3 className="text-[13px] sm:text-[14px] font-semibold text-neutral-900">
                       {drillDown.label}
-                      <span className="ml-2 text-[13px] font-normal text-neutral-500">
+                      <span className="ml-1.5 sm:ml-2 text-[12px] sm:text-[13px] font-normal text-neutral-500">
                         ({filteredDrillDownCalls.length} of {drillDownCalls.length} {drillDownCalls.length === 1 ? "call" : "calls"})
                       </span>
                     </h3>
@@ -895,53 +917,56 @@ function AnalyticsContent() {
                       <X className="h-4 w-4 text-neutral-500" />
                     </button>
                   </div>
-                  <div className="flex gap-3 mb-4">
-                    <div className="relative flex-1">
+                  <div className="flex gap-2 md:gap-3 mb-3 sm:mb-4">
+                    <div className="relative min-w-0 flex-1">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
                       <Input
                         type="text"
-                        placeholder="Search calls..."
+                        placeholder="Search calls"
                         value={drillDownSearch}
                         onChange={(e) => setDrillDownSearch(e.target.value)}
-                        className="pl-9 h-9 border-neutral-200 bg-white"
+                        className="pl-9 h-8 border-neutral-200 bg-white text-neutral-600 md:h-9 md:text-neutral-900"
                       />
                     </div>
-                    <div className="flex bg-white rounded-md border border-neutral-200 overflow-hidden">
+                    <div className="flex shrink-0 bg-white rounded-md border border-neutral-200">
                       <button
                         onClick={() => setDrillDownReviewFilter("all")}
+                        title="All"
                         className={cn(
-                          "px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5",
+                          "px-2 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 md:px-3",
                           drillDownReviewFilter === "all"
                             ? "bg-neutral-900 text-white rounded-l"
                             : "text-neutral-600 hover:text-neutral-900",
                         )}
                       >
-                        <Filter className={cn("h-3.5 w-3.5", drillDownReviewFilter === "all" ? "text-white" : "text-neutral-400")} />
-                        All
+                        <List className={cn("h-3.5 w-3.5", drillDownReviewFilter === "all" ? "text-white" : "text-neutral-400")} />
+                        <span className="hidden md:inline">All</span>
                       </button>
                       <button
                         onClick={() => setDrillDownReviewFilter("reviewed")}
+                        title="Reviewed"
                         className={cn(
-                          "px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5",
+                          "px-2 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 md:px-3",
                           drillDownReviewFilter === "reviewed"
                             ? "bg-neutral-900 text-white"
                             : "text-neutral-600 hover:text-neutral-900",
                         )}
                       >
                         <CheckCircle2 className={cn("h-3.5 w-3.5", drillDownReviewFilter === "reviewed" ? "text-white" : "text-green-600")} />
-                        Reviewed
+                        <span className="hidden md:inline">Reviewed</span>
                       </button>
                       <button
                         onClick={() => setDrillDownReviewFilter("needs_reviewed")}
+                        title="Needs Review"
                         className={cn(
-                          "px-3 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5",
+                          "px-2 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 md:px-3",
                           drillDownReviewFilter === "needs_reviewed"
                             ? "bg-neutral-900 text-white rounded-r"
                             : "text-neutral-600 hover:text-neutral-900",
                         )}
                       >
                         <Circle className={cn("h-3.5 w-3.5", drillDownReviewFilter === "needs_reviewed" ? "text-white" : "text-amber-600")} strokeWidth={2} />
-                        Needs Review
+                        <span className="hidden whitespace-nowrap md:inline">Needs Review</span>
                       </button>
                     </div>
                   </div>
@@ -973,7 +998,11 @@ function AnalyticsContent() {
                     {sortedDoctors.map((doctor) => {
                       const reviewPct = Math.round(doctor.review_completion_rate * 100);
                       return (
-                        <div key={doctor.doctor_name} className="px-4 py-3">
+                        <div
+                          key={doctor.doctor_name}
+                          className={cn("px-4 py-3", period === "1d" && "cursor-pointer hover:bg-neutral-50 active:bg-neutral-100 transition-colors")}
+                          onClick={period === "1d" ? () => handleDoctorRowClick(doctor.doctor_name) : undefined}
+                        >
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[13px] font-semibold text-neutral-900 truncate">{doctor.doctor_name}</span>
                             <span className="shrink-0 text-[14px] font-bold tabular-nums text-neutral-900 ml-3">{doctor.total_calls}</span>
@@ -1063,7 +1092,7 @@ function AnalyticsContent() {
                       ) : (
                         <>
                           {sortedDoctors.map((doctor) => (
-                            <DoctorRow key={doctor.doctor_name} doctor={doctor} />
+                            <DoctorRow key={doctor.doctor_name} doctor={doctor} onClick={period === "1d" ? () => handleDoctorRowClick(doctor.doctor_name) : undefined} />
                           ))}
                           <TableRow className="bg-neutral-50 hover:bg-neutral-50 border-t-2 border-neutral-200">
                             <TableCell className="px-4 py-3">
@@ -1170,7 +1199,7 @@ function SortIcon({
   );
 }
 
-function DoctorRow({ doctor }: { doctor: DoctorBreakdownItem }) {
+function DoctorRow({ doctor, onClick }: { doctor: DoctorBreakdownItem; onClick?: () => void }) {
   const reviewPercent = (doctor.review_completion_rate * 100).toFixed(0);
 
   const allReviewers = doctor.performers
@@ -1189,7 +1218,7 @@ function DoctorRow({ doctor }: { doctor: DoctorBreakdownItem }) {
   const hasData = allReviewers.length > 0 || doctor.total_calls > 0;
 
   return (
-    <TableRow className="hover:bg-neutral-50">
+    <TableRow className={cn("hover:bg-neutral-50", onClick && "cursor-pointer")} onClick={onClick}>
       <TableCell className="px-4 py-3">
         <span className="font-medium text-neutral-900 text-[13px]">{doctor.doctor_name}</span>
       </TableCell>

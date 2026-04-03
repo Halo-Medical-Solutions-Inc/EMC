@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SankeyNode, SankeyLink } from "@/components/analytics/sankey-diagram";
@@ -9,6 +9,7 @@ interface SankeyMobileStepperProps {
   nodes: SankeyNode[];
   links: SankeyLink[];
   onNodeClick?: (node: SankeyNode) => void;
+  selectedNodeId?: string | null;
 }
 
 const NODE_WIDTH = 10;
@@ -133,6 +134,7 @@ export default function SankeyMobileStepper({
   nodes,
   links,
   onNodeClick,
+  selectedNodeId = null,
 }: SankeyMobileStepperProps) {
   const [step, setStep] = useState(0);
   const touchStartX = useRef<number | null>(null);
@@ -152,6 +154,16 @@ export default function SankeyMobileStepper({
   }, [nodes]);
 
   const totalSteps = Math.max(1, layerNumbers.length - 1);
+
+  useEffect(() => {
+    if (!selectedNodeId || layerNumbers.length < 2) return;
+    const selectedNode = positionedNodes.find((n) => n.id === selectedNodeId);
+    if (!selectedNode) return;
+    const layerIdx = layerNumbers.indexOf(selectedNode.layer);
+    if (layerIdx === -1) return;
+    const targetStep = Math.max(0, Math.min(totalSteps - 1, layerIdx > 0 ? layerIdx - 1 : 0));
+    setStep(targetStep);
+  }, [selectedNodeId, layerNumbers, positionedNodes, totalSteps]);
 
   const stepLabels = useMemo(() => {
     if (layerNumbers.length <= 1) return ["Overview"];
@@ -271,13 +283,18 @@ export default function SankeyMobileStepper({
               visibleLayers.has(link.sourceNode.layer) && visibleLayers.has(link.targetNode.layer);
             if (!visible) return null;
 
+            const isHighlighted = selectedNodeId
+              ? link.sourceNode.id === selectedNodeId || link.targetNode.id === selectedNodeId
+              : false;
+
             return (
               <g key={`link-${i}`}>
                 <path
                   d={link.path}
                   fill={link.color}
-                  fillOpacity={0.18}
+                  fillOpacity={selectedNodeId ? (isHighlighted ? 0.4 : 0.04) : 0.18}
                   stroke="none"
+                  style={{ transition: "fill-opacity 150ms" }}
                 />
               </g>
             );
@@ -294,6 +311,16 @@ export default function SankeyMobileStepper({
             const canDrillDown = onNodeClick && isLeaf;
             const canNavigateForward = !isLeaf && !isLeft && step < totalSteps - 1;
 
+            const isSelected = node.id === selectedNodeId;
+            const isConnected = selectedNodeId
+              ? positionedLinks.some(
+                  (l) =>
+                    (l.sourceNode.id === selectedNodeId && l.targetNode.id === node.id) ||
+                    (l.targetNode.id === selectedNodeId && l.sourceNode.id === node.id)
+                )
+              : false;
+            const shouldHighlight = isSelected || isConnected;
+
             return (
               <g
                 key={node.id}
@@ -309,8 +336,9 @@ export default function SankeyMobileStepper({
                   width={NODE_WIDTH}
                   height={node.height}
                   fill={node.color}
-                  fillOpacity={0.7}
+                  fillOpacity={selectedNodeId ? (shouldHighlight ? 0.9 : 0.15) : 0.7}
                   rx={1}
+                  style={{ transition: "fill-opacity 150ms" }}
                 />
                 <text
                   x={labelX}
@@ -318,7 +346,11 @@ export default function SankeyMobileStepper({
                   textAnchor={anchor}
                   dominantBaseline="middle"
                   className="fill-neutral-600 select-none"
-                  style={{ fontSize: "13px", fontWeight: 500 }}
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: selectedNodeId ? (shouldHighlight ? 600 : 400) : 500,
+                    transition: "font-weight 150ms",
+                  }}
                 >
                   {node.label} · {node.value.toLocaleString()}
                 </text>
