@@ -37,8 +37,10 @@ async def run_extraction(call_id: UUID) -> None:
             if not call:
                 return
 
+            practice = await practice_service.get_practice(db)
             teams = await practice_service.get_teams(db)
             team_names = [t.title for t in teams] if teams else None
+            priority_config = (practice.priority_config if practice else None) or {}
 
             provider_names = [
                 "Dr. Bertolucci",
@@ -59,6 +61,7 @@ async def run_extraction(call_id: UUID) -> None:
                 provider_names,
                 team_names=team_names,
                 staff_extension_map=staff_extension_map,
+                priority_descriptions=priority_config if priority_config else None,
             )
 
             vapi_data = call_service.decrypt_vapi_data(call) or {}

@@ -159,10 +159,12 @@ function TeamCard({
                 <p className="truncate text-[11px] text-neutral-500">{member.email}</p>
               </div>
               <button
+                type="button"
+                aria-label={`Remove ${member.full_name} from this team`}
                 onClick={() => onRemoveMember(member.id)}
-                className="ml-2 rounded p-1 opacity-0 transition-opacity hover:bg-neutral-100 group-hover:opacity-100"
+                className="ml-2 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded opacity-100 transition-opacity hover:bg-neutral-100 touch-manipulation sm:opacity-0 sm:group-hover:opacity-100"
               >
-                <X className="h-3.5 w-3.5 text-neutral-400" />
+                <X className="h-4 w-4 text-neutral-400" />
               </button>
             </div>
           ))}
@@ -226,6 +228,9 @@ export default function PracticeSettingsPage() {
   const [activeTab, setActiveTab] = useState<"teams" | "members" | "general">("teams");
   const [practiceName, setPracticeName] = useState("");
   const [practiceRegion, setPracticeRegion] = useState("");
+  const [priorityLow, setPriorityLow] = useState("");
+  const [priorityMedium, setPriorityMedium] = useState("");
+  const [priorityHigh, setPriorityHigh] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
   const [addTeamDialogOpen, setAddTeamDialogOpen] = useState(false);
@@ -270,6 +275,9 @@ export default function PracticeSettingsPage() {
     if (practice) {
       setPracticeName(practice.practice_name);
       setPracticeRegion(practice.practice_region || "");
+      setPriorityLow(practice.priority_config?.low || "Routine appointment scheduling, prescription refills, billing questions, medical records requests, general inquiries, LASIK information, outgoing referral status checks.");
+      setPriorityMedium(practice.priority_config?.medium || "Non-urgent symptom reports (e.g. mild discomfort, blurry vision, redness, dryness), medication questions, incoming referral status, appointment changes, test results.");
+      setPriorityHigh(practice.priority_config?.high || "Transfer-triggering symptoms (floaters/flashes, curtain or cobwebs in vision, signs of infection, suture concerns, extreme or unusual pain), ER/urgent care/discharge follow-ups, calls from outside practices or hospitals, severely escalated callers, or anything requiring same-day or immediate attention.");
     }
   }, [practice]);
 
@@ -278,6 +286,18 @@ export default function PracticeSettingsPage() {
       setLocalTeams(practice.teams.teams);
     }
   }, [practice?.teams?.teams]);
+
+  const defaultLow = "Routine appointment scheduling, prescription refills, billing questions, medical records requests, general inquiries, LASIK information, outgoing referral status checks.";
+  const defaultMedium = "Non-urgent symptom reports (e.g. mild discomfort, blurry vision, redness, dryness), medication questions, incoming referral status, appointment changes, test results.";
+  const defaultHigh = "Transfer-triggering symptoms (floaters/flashes, curtain or cobwebs in vision, signs of infection, suture concerns, extreme or unusual pain), ER/urgent care/discharge follow-ups, calls from outside practices or hospitals, severely escalated callers, or anything requiring same-day or immediate attention.";
+
+  const hasGeneralChanges = practice ? (
+    practiceName !== practice.practice_name ||
+    practiceRegion !== (practice.practice_region || "") ||
+    priorityLow !== (practice.priority_config?.low || defaultLow) ||
+    priorityMedium !== (practice.priority_config?.medium || defaultMedium) ||
+    priorityHigh !== (practice.priority_config?.high || defaultHigh)
+  ) : false;
 
   const teams = localTeams;
   const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
@@ -332,6 +352,11 @@ export default function PracticeSettingsPage() {
       const data: PracticeUpdate = {
         practice_name: practiceName,
         practice_region: practiceRegion,
+        priority_config: {
+          low: priorityLow,
+          medium: priorityMedium,
+          high: priorityHigh,
+        },
       };
       await dispatch(updatePractice(data)).unwrap();
       toast.success("Practice updated successfully");
@@ -554,9 +579,42 @@ export default function PracticeSettingsPage() {
     }
   }
 
+  function formatDateShort(utcDateString: string, includeTime = false): string {
+    try {
+      const utcDate = new Date(utcDateString);
+      const region = user?.region || null;
+      const timezone = region ? REGION_TO_TIMEZONE[region] || region : "America/Los_Angeles";
+      const now = new Date();
+      const localFormatter = new Intl.DateTimeFormat("en-US", {
+        year: "numeric", month: "numeric", day: "numeric", timeZone: timezone,
+      });
+      const timeFormatter = new Intl.DateTimeFormat("en-US", {
+        hour: "numeric", minute: "2-digit", hour12: true, timeZone: timezone,
+      });
+      const todayStr = localFormatter.format(now);
+      const dateStr = localFormatter.format(utcDate);
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = localFormatter.format(yesterday);
+
+      const timePart = includeTime ? `, ${timeFormatter.format(utcDate)}` : "";
+
+      if (dateStr === todayStr) return `Today${timePart}`;
+      if (dateStr === yesterdayStr) return `Yesterday${timePart}`;
+
+      const parts = localFormatter.formatToParts(utcDate);
+      const m = parts.find((p) => p.type === "month")?.value || "";
+      const d = parts.find((p) => p.type === "day")?.value || "";
+      const y = (parts.find((p) => p.type === "year")?.value || "").slice(-2);
+      return `${m}/${d}/${y}${timePart}`;
+    } catch {
+      return utcDateString;
+    }
+  }
+
   function formatLastActive(dateStr: string | null): string {
     if (!dateStr) return "Not recorded";
-    return formatDateTime(dateStr, user?.region);
+    return formatDateShort(dateStr, true);
   }
 
   function getRoleBadge(role: UserRole) {
@@ -729,10 +787,58 @@ export default function PracticeSettingsPage() {
                   </Select>
                 </div>
               </div>
+              <div className="pt-4 border-t border-neutral-100">
+                <h3 className="text-[14px] font-semibold text-neutral-900 mb-1">Priority Level Instructions</h3>
+                <p className="text-[13px] text-neutral-500 mb-4">Define what qualifies as each priority level when calls are categorized.</p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="priority_low" className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-700">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                      Low Priority
+                    </Label>
+                    <Textarea
+                      id="priority_low"
+                      value={priorityLow}
+                      onChange={(e) => setPriorityLow(e.target.value)}
+                      disabled={isUpdating}
+                      placeholder="Routine appointment scheduling, prescription refills, billing questions..."
+                      className="min-h-[80px] border-neutral-200 bg-white text-[13px] text-neutral-900 placeholder:text-neutral-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="priority_medium" className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-700">
+                      <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                      Medium Priority
+                    </Label>
+                    <Textarea
+                      id="priority_medium"
+                      value={priorityMedium}
+                      onChange={(e) => setPriorityMedium(e.target.value)}
+                      disabled={isUpdating}
+                      placeholder="Non-urgent symptom reports, medication questions, appointment changes..."
+                      className="min-h-[80px] border-neutral-200 bg-white text-[13px] text-neutral-900 placeholder:text-neutral-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="priority_high" className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-700">
+                      <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+                      High Priority
+                    </Label>
+                    <Textarea
+                      id="priority_high"
+                      value={priorityHigh}
+                      onChange={(e) => setPriorityHigh(e.target.value)}
+                      disabled={isUpdating}
+                      placeholder="Transfer-triggering symptoms, ER/urgent care follow-ups, severely escalated callers..."
+                      className="min-h-[80px] border-neutral-200 bg-white text-[13px] text-neutral-900 placeholder:text-neutral-400"
+                    />
+                  </div>
+                </div>
+              </div>
               <Button
                 type="submit"
-                disabled={isUpdating}
-                className="h-9 rounded-none bg-black px-5 text-[14px] font-medium text-white hover:bg-neutral-800"
+                disabled={isUpdating || !hasGeneralChanges}
+                className="h-9 rounded-none bg-black px-5 text-[14px] font-medium text-white hover:bg-neutral-800 disabled:opacity-40"
               >
                 {isUpdating ? <Spinner /> : "Save Changes"}
               </Button>
@@ -811,85 +917,123 @@ export default function PracticeSettingsPage() {
               <div className="mb-8">
                 <h3 className="mb-3 text-sm font-medium text-neutral-700">Active Members</h3>
                 <div
-                  className="overflow-x-auto rounded-lg border border-neutral-100"
+                  className="rounded-lg border border-neutral-100"
                   style={{ backgroundColor: "#FDFDFD" }}
                 >
-                  <div
-                    className={`grid ${isAdmin ? "grid-cols-[2fr_1fr_1.5fr_40px]" : "grid-cols-[2fr_1fr_1.5fr]"} gap-3 border-b border-neutral-100 px-4 py-3 text-[13px] font-medium text-neutral-500`}
-                    style={{ minWidth: "420px" }}
-                  >
+                  <div className="hidden sm:grid grid-cols-[2fr_1fr_1.5fr_40px] gap-3 border-b border-neutral-100 px-4 py-3 text-[13px] font-medium text-neutral-500">
                     <div>Name</div>
                     <div>Role</div>
                     <div>Last Active</div>
-                    {isAdmin && <div></div>}
+                    <div></div>
                   </div>
 
                   {[...users]
                     .sort((a, b) => {
-                      const aIsAdmin =
-                        a.role === UserRole.ADMIN || a.role === UserRole.SUPER_ADMIN;
-                      const bIsAdmin =
-                        b.role === UserRole.ADMIN || b.role === UserRole.SUPER_ADMIN;
-                      if (aIsAdmin && !bIsAdmin) return 1;
-                      if (!aIsAdmin && bIsAdmin) return -1;
-                      return a.full_name.localeCompare(b.full_name);
+                      const aTime = a.last_active_at ? new Date(a.last_active_at).getTime() : 0;
+                      const bTime = b.last_active_at ? new Date(b.last_active_at).getTime() : 0;
+                      return bTime - aTime;
                     })
                     .map((usr) => (
                       <div
                         key={usr.id}
-                        className={`group grid ${isAdmin ? "grid-cols-[2fr_1fr_1.5fr_40px]" : "grid-cols-[2fr_1fr_1.5fr]"} gap-3 border-b border-neutral-50 px-4 py-3.5 transition-colors hover:bg-neutral-50 last:border-b-0`}
-                        style={{ minWidth: "420px" }}
+                        className="group border-b border-neutral-50 px-4 py-3.5 transition-colors hover:bg-neutral-50 last:border-b-0"
                       >
-                        <div className="flex flex-col gap-0.5">
-                          <div className="text-[14px] font-medium text-neutral-900">
-                            {formatName(usr.full_name)}
+                        <div className="hidden sm:grid grid-cols-[2fr_1fr_1.5fr_40px] gap-3 items-center">
+                          <div className="flex flex-col gap-0.5">
+                            <div className="text-[14px] font-medium text-neutral-900">
+                              {formatName(usr.full_name)}
+                            </div>
+                            <div className="text-[12px] text-neutral-500">{usr.email}</div>
                           </div>
-                          <div className="text-[12px] text-neutral-500">{usr.email}</div>
-                        </div>
-                        <div className="flex items-center text-[13px]">
-                          {getRoleBadge(usr.role)}
-                        </div>
-                        <div className="flex items-center text-[13px] text-neutral-600">
-                          {formatLastActive(usr.last_active_at)}
-                        </div>
-                        {isAdmin && (
-                          <div className="flex items-center justify-end">
-                            {usr.role !== UserRole.SUPER_ADMIN && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                    <MoreVertical className="h-4 w-4 text-neutral-500" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setEditingUser(usr);
-                                      setEditFormData({
-                                        full_name: usr.full_name,
-                                        role: usr.role,
-                                        region: usr.region,
-                                      });
-                                    }}
-                                  >
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    <span>Edit</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    variant="destructive"
-                                    onClick={() => {
-                                      setSelectedUserId(usr.id);
-                                      setDeleteUserDialogOpen(true);
-                                    }}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    <span>Delete</span>
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
+                          <div className="flex items-center text-[13px]">
+                            {getRoleBadge(usr.role)}
                           </div>
-                        )}
+                          <div className="flex items-center text-[13px] text-neutral-600">
+                            {formatLastActive(usr.last_active_at)}
+                          </div>
+                          {isAdmin && (
+                            <div className="flex items-center justify-end">
+                              {usr.role !== UserRole.SUPER_ADMIN ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                      <MoreVertical className="h-4 w-4 text-neutral-500" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-40">
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setEditingUser(usr);
+                                        setEditFormData({
+                                          full_name: usr.full_name,
+                                          role: usr.role,
+                                          region: usr.region,
+                                        });
+                                      }}
+                                    >
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      <span>Edit</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={() => {
+                                        setSelectedUserId(usr.id);
+                                        setDeleteUserDialogOpen(true);
+                                      }}
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      <span>Delete</span>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <div className="h-8 w-8" />
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="group/member sm:hidden">
+                          <div className="flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[14px] font-medium text-neutral-900">{formatName(usr.full_name)}</div>
+                              <div className="text-[12px] text-neutral-500">{usr.email}</div>
+                              <div className="mt-1 text-[11px] text-neutral-400">{formatLastActive(usr.last_active_at)}</div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0 mt-1">
+                              {getRoleBadge(usr.role)}
+                              {isAdmin && (usr.role !== UserRole.SUPER_ADMIN ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover/member:opacity-100 transition-opacity">
+                                      <MoreVertical className="h-4 w-4 text-neutral-500" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-40">
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setEditingUser(usr);
+                                        setEditFormData({ full_name: usr.full_name, role: usr.role, region: usr.region });
+                                      }}
+                                    >
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      <span>Edit</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={() => { setSelectedUserId(usr.id); setDeleteUserDialogOpen(true); }}
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      <span>Delete</span>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <div className="h-8 w-8" />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     ))}
                 </div>
@@ -900,70 +1044,84 @@ export default function PracticeSettingsPage() {
               <div>
                 <h3 className="mb-3 text-sm font-medium text-neutral-700">Pending Invitations</h3>
                 <div
-                  className="overflow-x-auto rounded-lg border border-neutral-100"
+                  className="rounded-lg border border-neutral-100"
                   style={{ backgroundColor: "#FDFDFD" }}
                 >
-                  <div
-                    className={`grid ${isAdmin ? "grid-cols-[2fr_0.8fr_1.2fr_1fr_40px]" : "grid-cols-[2fr_0.8fr_1.2fr_1fr]"} gap-3 border-b border-neutral-100 px-4 py-3 text-[13px] font-medium text-neutral-500`}
-                    style={{ minWidth: "480px" }}
-                  >
+                  <div className="hidden sm:grid grid-cols-[2fr_0.8fr_1.2fr_1fr_40px] gap-3 border-b border-neutral-100 px-4 py-3 text-[13px] font-medium text-neutral-500">
                     <div>Email</div>
                     <div>Role</div>
-                    <div>Expires At</div>
+                    <div>Expires</div>
                     <div>Status</div>
-                    {isAdmin && <div></div>}
+                    <div></div>
                   </div>
 
                   {pendingInvitations.map((invitation) => (
                     <div
                       key={invitation.id}
-                      className={`group grid ${isAdmin ? "grid-cols-[2fr_0.8fr_1.2fr_1fr_40px]" : "grid-cols-[2fr_0.8fr_1.2fr_1fr]"} gap-3 border-b border-neutral-50 px-4 py-3.5 transition-colors hover:bg-neutral-50 last:border-b-0`}
-                      style={{ minWidth: "480px" }}
+                      className="group border-b border-neutral-50 px-4 py-3.5 transition-colors hover:bg-neutral-50 last:border-b-0"
                     >
-                      <div className="flex items-center text-[14px] font-medium text-neutral-900">
-                        {invitation.email}
-                      </div>
-                      <div className="flex items-center text-[13px]">
-                        {getRoleBadge(invitation.role)}
-                      </div>
-                      <div className="flex items-center text-[13px] text-neutral-500">
-                        {formatDateTime(invitation.expires_at, user?.region)}
-                      </div>
-                      <div className="flex items-center text-[13px]">
-                        {getStatusBadge(invitation)}
-                      </div>
-                      {isAdmin && (
-                        <div className="flex items-center justify-end">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <MoreVertical className="h-4 w-4 text-neutral-500" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedInvitationId(invitation.id);
-                                  setResendInviteDialogOpen(true);
-                                }}
-                              >
-                                <RotateCcw className="mr-2 h-4 w-4" />
-                                <span>Resend</span>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() => {
-                                  setSelectedInvitationId(invitation.id);
-                                  setCancelInviteDialogOpen(true);
-                                }}
-                              >
-                                <X className="mr-2 h-4 w-4" />
-                                <span>Cancel</span>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                      <div className="hidden sm:grid grid-cols-[2fr_0.8fr_1.2fr_1fr_40px] gap-3 items-center">
+                        <div className="text-[14px] font-medium text-neutral-900 truncate">{invitation.email}</div>
+                        <div className="text-[13px]">{getRoleBadge(invitation.role)}</div>
+                        <div className="text-[13px] text-neutral-500">
+                          {new Date(invitation.expires_at) < new Date() ? "Expired" : "Expires"} {formatDateShort(invitation.expires_at, true).toLowerCase()}
                         </div>
-                      )}
+                        <div className="text-[13px]">{getStatusBadge(invitation)}</div>
+                        {isAdmin && (
+                          <div className="flex items-center justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreVertical className="h-4 w-4 text-neutral-500" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem onClick={() => { setSelectedInvitationId(invitation.id); setResendInviteDialogOpen(true); }}>
+                                  <RotateCcw className="mr-2 h-4 w-4" />
+                                  <span>Resend</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem variant="destructive" onClick={() => { setSelectedInvitationId(invitation.id); setCancelInviteDialogOpen(true); }}>
+                                  <X className="mr-2 h-4 w-4" />
+                                  <span>Cancel</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="group/invite sm:hidden">
+                        <div className="flex items-start justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[14px] font-medium text-neutral-900 truncate">{invitation.email}</div>
+                            <div className="mt-1 text-[11px] text-neutral-400">
+                              {new Date(invitation.expires_at) < new Date() ? "Expired" : "Expires"} {formatDateShort(invitation.expires_at, true).toLowerCase()}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 mt-1">
+                            {getRoleBadge(invitation.role)}
+                            {isAdmin && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover/invite:opacity-100 transition-opacity">
+                                    <MoreVertical className="h-4 w-4 text-neutral-500" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                  <DropdownMenuItem onClick={() => { setSelectedInvitationId(invitation.id); setResendInviteDialogOpen(true); }}>
+                                    <RotateCcw className="mr-2 h-4 w-4" />
+                                    <span>Resend</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem variant="destructive" onClick={() => { setSelectedInvitationId(invitation.id); setCancelInviteDialogOpen(true); }}>
+                                    <X className="mr-2 h-4 w-4" />
+                                    <span>Cancel</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>

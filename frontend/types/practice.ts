@@ -23,6 +23,12 @@ export interface TeamMembersUpdate {
   members: string[];
 }
 
+export interface PriorityConfig {
+  low: string;
+  medium: string;
+  high: string;
+}
+
 export interface Practice {
   id: string;
   practice_name: string;
@@ -30,6 +36,7 @@ export interface Practice {
   active_call_ids: string[];
   max_concurrent_calls: number;
   teams: TeamsConfig;
+  priority_config: PriorityConfig;
   created_at: string;
   updated_at: string;
 }
@@ -37,4 +44,5 @@ export interface Practice {
 export interface PracticeUpdate {
   practice_name?: string;
   practice_region?: string;
+  priority_config?: PriorityConfig;
 }

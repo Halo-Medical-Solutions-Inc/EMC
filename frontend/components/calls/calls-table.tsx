@@ -161,7 +161,7 @@ export function CallsTable({
         return "bg-amber-500";
       case "low":
       default:
-        return "bg-slate-400";
+        return "bg-emerald-500";
     }
   };
 

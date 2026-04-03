@@ -29,6 +29,9 @@ class Practice(Base):
     teams: Mapped[Dict[str, Any]] = mapped_column(
         JSONB, nullable=False, server_default="{}"
     )
+    priority_config: Mapped[Dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, server_default="{}"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

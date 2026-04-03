@@ -30,9 +30,16 @@ class TeamMembersUpdate(BaseModel):
     members: List[str]
 
 
+class PriorityConfig(BaseModel):
+    low: str = ""
+    medium: str = ""
+    high: str = ""
+
+
 class PracticeUpdate(BaseModel):
     practice_name: Optional[str] = None
     practice_region: Optional[str] = None
+    priority_config: Optional[PriorityConfig] = None
 
 
 class PracticeResponse(BaseModel):
@@ -42,6 +49,7 @@ class PracticeResponse(BaseModel):
     active_call_ids: List[uuid.UUID]
     max_concurrent_calls: int
     teams: TeamsConfig
+    priority_config: PriorityConfig
     created_at: datetime
     updated_at: datetime
 
@@ -53,4 +61,11 @@ class PracticeResponse(BaseModel):
         if isinstance(v, dict):
             return TeamsConfig(**v)
         return v
+
+    @field_validator("priority_config", mode="before")
+    @classmethod
+    def parse_priority_config(cls, v: Any) -> PriorityConfig:
+        if isinstance(v, dict):
+            return PriorityConfig(**v)
+        return v if v else PriorityConfig()
 

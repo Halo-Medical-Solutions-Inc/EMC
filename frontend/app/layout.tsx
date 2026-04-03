@@ -33,6 +33,8 @@ export default function RootLayout({
           name="description"
           content="Eye Medical Center of Fresno"
         />
+        <link rel="icon" href="/halo-icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/halo-icon.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

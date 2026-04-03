@@ -71,10 +71,34 @@ def build_staff_extension_map(
     return "\n".join(lines)
 
 
+DEFAULT_PRIORITY_LOW = (
+    "Routine appointment scheduling, prescription refills, billing questions, "
+    "medical records requests, general inquiries, LASIK information, outgoing referral status checks."
+)
+DEFAULT_PRIORITY_MEDIUM = (
+    "Non-urgent symptom reports (e.g. mild discomfort, blurry vision, redness, dryness), "
+    "medication questions, incoming referral status, appointment changes, test results."
+)
+DEFAULT_PRIORITY_HIGH = (
+    "Transfer-triggering symptoms (floaters/flashes, curtain or cobwebs in vision, "
+    "signs of infection, suture concerns, extreme or unusual pain), ER/urgent care/discharge follow-ups, "
+    "calls from outside practices or hospitals, severely escalated callers, "
+    "or anything requiring same-day or immediate attention."
+)
+
+
+def _build_priority_description(custom: Optional[Dict[str, str]] = None) -> str:
+    low = (custom or {}).get("low") or DEFAULT_PRIORITY_LOW
+    medium = (custom or {}).get("medium") or DEFAULT_PRIORITY_MEDIUM
+    high = (custom or {}).get("high") or DEFAULT_PRIORITY_HIGH
+    return f"Urgency level of the call. Low: {low} Medium: {medium} High: {high}"
+
+
 def build_extraction_schema(
     provider_names: List[str],
     team_names: Optional[List[str]] = None,
     staff_extension_map: Optional[str] = None,
+    priority_descriptions: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     provider_enum = (
         provider_names
@@ -151,19 +175,7 @@ def build_extraction_schema(
         {
             "name": "priority",
             "type": "string",
-            "description": (
-                "Urgency level of the call. "
-                "Low: routine appointment scheduling, prescription refills, "
-                "billing questions, medical records requests, general inquiries, "
-                "LASIK information, outgoing referral status checks. "
-                "Medium: non-urgent symptom reports (e.g. mild discomfort, blurry vision, "
-                "redness, dryness), medication questions, incoming referral status, "
-                "appointment changes, test results. "
-                "High: transfer-triggering symptoms (floaters/flashes, curtain or cobwebs "
-                "in vision, signs of infection, suture concerns, extreme or unusual pain), "
-                "ER/urgent care/discharge follow-ups, calls from outside practices or hospitals, "
-                "severely escalated callers, or anything requiring same-day or immediate attention."
-            ),
+            "description": _build_priority_description(priority_descriptions),
             "enum": [
                 "Low",
                 "Medium",

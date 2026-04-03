@@ -123,7 +123,7 @@ function MessagesContent() {
       }
     }
 
-    if (!selectedConversation && !isMobile) {
+    if (!selectedConversation && isMobile === false) {
       const defaultChannel = conversations.find(
         (c) => c.type === ConversationType.CHANNEL && c.is_default && c.name === "Eye Medical Center",
       );

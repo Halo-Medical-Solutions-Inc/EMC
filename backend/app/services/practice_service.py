@@ -30,6 +30,8 @@ async def update_practice(
         practice.practice_name = data.practice_name
     if data.practice_region is not None:
         practice.practice_region = data.practice_region
+    if data.priority_config is not None:
+        practice.priority_config = data.priority_config.model_dump()
     await db.commit()
     await db.refresh(practice)
     return practice
