@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { format } from "date-fns";
-import { ArrowUp, Bold, Italic, Loader2, Smile, Strikethrough, X } from "lucide-react";
+import { ArrowLeft, ArrowUp, Bold, Italic, Loader2, Smile, Strikethrough, X } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -35,6 +35,7 @@ interface ThreadPanelProps {
   onSendReply: (content: string) => void;
   onClose: () => void;
   onToggleReaction: (messageId: string, emoji: string) => void;
+  onBack?: () => void;
 }
 
 function getInitials(name: string): string {
@@ -152,6 +153,7 @@ export default function ThreadPanel({
   onSendReply,
   onClose,
   onToggleReaction,
+  onBack,
 }: ThreadPanelProps) {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [, setTick] = useState(0);
@@ -210,12 +212,24 @@ export default function ThreadPanel({
   useEffect(() => { submitRef.current = handleSubmit; }, [handleSubmit]);
 
   return (
-    <div className="flex h-full w-[380px] shrink-0 flex-col border-l border-neutral-200 bg-white">
+    <div className={cn("flex h-full shrink-0 flex-col border-l border-neutral-200 bg-white", onBack ? "w-full" : "w-[380px]")}>
       <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
-        <h3 className="text-[14px] font-semibold text-neutral-900">Thread</h3>
-        <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+          )}
+          <h3 className="text-[14px] font-semibold text-neutral-900">Thread</h3>
+        </div>
+        {!onBack && (
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide">

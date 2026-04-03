@@ -237,7 +237,7 @@ function ConversationRow({
             e.stopPropagation();
             onDelete(conversation.id);
           }}
-          className="hidden shrink-0 rounded p-0.5 text-neutral-400 hover:text-neutral-700 group-hover:block"
+          className="block shrink-0 rounded p-0.5 text-neutral-400 hover:text-neutral-700 lg:hidden lg:group-hover:block"
         >
           <Archive className="h-3 w-3" />
         </button>

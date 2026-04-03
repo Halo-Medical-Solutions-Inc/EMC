@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 import { toast } from "sonner";
 
+import { useIsMobile } from "@/hooks/use-mobile";
 import apiClient from "@/lib/api-client";
 import ChatPanel from "@/components/messages/chat-panel";
 import ConversationList from "@/components/messages/conversation-list";
@@ -41,11 +42,15 @@ import {
   setSelectedConversation,
   toggleReaction,
 } from "@/store/slices/messages-slice";
+import { cn } from "@/lib/utils";
 import { Conversation, ConversationType } from "@/types/message";
+
+type MobileView = "list" | "chat" | "thread";
 
 function MessagesContent() {
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
+  const isMobile = useIsMobile();
   const { user } = useAppSelector((state) => state.auth);
   const { users } = useAppSelector((state) => state.users);
   const {
@@ -61,6 +66,7 @@ function MessagesContent() {
     sendingMessage,
   } = useAppSelector((state) => state.messages);
 
+  const [mobileView, setMobileView] = useState<MobileView>("list");
   const [showChannelDialog, setShowChannelDialog] = useState(false);
   const [showDmDialog, setShowDmDialog] = useState(false);
   const [showMembersDialog, setShowMembersDialog] = useState(false);
@@ -89,8 +95,9 @@ function MessagesContent() {
       dispatch(fetchMessages(conv.id));
       dispatch(markAsRead(conv.id));
       dispatch(closeThread());
+      if (isMobile) setMobileView("chat");
     },
-    [dispatch],
+    [dispatch, isMobile],
   );
 
   const [handledConversationParam, setHandledConversationParam] = useState<string | null>(null);
@@ -110,7 +117,7 @@ function MessagesContent() {
       }
     }
 
-    if (!selectedConversation) {
+    if (!selectedConversation && !isMobile) {
       const defaultChannel = conversations.find(
         (c) => c.type === ConversationType.CHANNEL && c.is_default && c.name === "Eye Medical Center",
       );
@@ -118,7 +125,7 @@ function MessagesContent() {
         handleSelectConversation(defaultChannel);
       }
     }
-  }, [conversations, selectedConversation, handleSelectConversation, searchParams, handledConversationParam]);
+  }, [conversations, selectedConversation, handleSelectConversation, searchParams, handledConversationParam, isMobile]);
 
   const handleSendMessage = useCallback(
     async (content: string) => {
@@ -220,8 +227,9 @@ function MessagesContent() {
       dispatch(
         fetchThread({ conversationId: selectedConversation.id, messageId }),
       );
+      if (isMobile) setMobileView("thread");
     },
-    [dispatch, selectedConversation],
+    [dispatch, selectedConversation, isMobile],
   );
 
   const handleSendReply = useCallback(
@@ -297,6 +305,13 @@ function MessagesContent() {
 
   const handleCloseThread = useCallback(() => {
     dispatch(closeThread());
+    if (isMobile) setMobileView("chat");
+  }, [dispatch, isMobile]);
+
+  const handleMobileBackToList = useCallback(() => {
+    dispatch(setSelectedConversation(null));
+    dispatch(closeThread());
+    setMobileView("list");
   }, [dispatch]);
 
   const handleDeleteConversation = useCallback(async () => {
@@ -312,8 +327,8 @@ function MessagesContent() {
   }, [dispatch, deleteTargetId]);
 
   return (
-    <div className="flex h-screen">
-      <div className="w-[260px] shrink-0">
+    <div className="flex h-dvh">
+      <div className={cn("w-[260px] shrink-0", isMobile && (mobileView === "list" ? "w-full" : "hidden"))}>
         <ConversationList
           conversations={conversations}
           selectedId={selectedConversation?.id ?? null}
@@ -324,7 +339,7 @@ function MessagesContent() {
           onDelete={(id) => setDeleteTargetId(id)}
         />
       </div>
-      <div className="flex-1">
+      <div className={cn("flex-1", isMobile && mobileView !== "chat" && "hidden")}>
         <ChatPanel
           conversation={selectedConversation}
           messages={messages}
@@ -340,9 +355,10 @@ function MessagesContent() {
           onOpenThread={handleOpenThread}
           onOpenMembers={() => setShowMembersDialog(true)}
           onLoadOlder={handleLoadOlder}
+          onBack={isMobile ? handleMobileBackToList : undefined}
         />
       </div>
-      {threadParent && (
+      {threadParent && (!isMobile || mobileView === "thread") && (
         <ThreadPanel
           parent={threadParent}
           replies={threadReplies}
@@ -360,6 +376,7 @@ function MessagesContent() {
           onSendReply={handleSendReply}
           onClose={handleCloseThread}
           onToggleReaction={handleToggleReaction}
+          onBack={isMobile ? handleCloseThread : undefined}
         />
       )}
 

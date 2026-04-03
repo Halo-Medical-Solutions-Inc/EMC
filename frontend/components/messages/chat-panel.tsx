@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { format } from "date-fns";
-import { Archive, ArrowUp, Bold, Check, Hash, Italic, Loader2, MessageSquare, Pencil, Smile, Strikethrough, Users, X } from "lucide-react";
+import { Archive, ArrowLeft, ArrowUp, Bold, Check, Hash, Italic, Loader2, MessageSquare, Pencil, Smile, Strikethrough, Users, X } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -40,6 +40,7 @@ interface ChatPanelProps {
   onOpenThread: (messageId: string) => void;
   onOpenMembers: () => void;
   onLoadOlder: () => void;
+  onBack?: () => void;
 }
 
 function getInitials(name: string): string {
@@ -132,6 +133,7 @@ export default function ChatPanel({
   onOpenThread,
   onOpenMembers,
   onLoadOlder,
+  onBack,
 }: ChatPanelProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -304,20 +306,30 @@ export default function ChatPanel({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-3">
-        <div>
-          <div className="flex items-center gap-1.5">
-            {isChannel && <Hash className="h-4 w-4 text-neutral-400" />}
-            <h3 className="text-[15px] font-semibold text-neutral-900">{title}</h3>
+      <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3 md:px-6">
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+          )}
+          <div>
+            <div className="flex items-center gap-1.5">
+              {isChannel && <Hash className="h-4 w-4 text-neutral-400" />}
+              <h3 className="text-[15px] font-semibold text-neutral-900">{title}</h3>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenMembers}
+              className="mt-0.5 flex items-center gap-1 text-[12px] text-neutral-500 transition-colors hover:text-neutral-700"
+            >
+              <Users className="h-3 w-3" />
+              <span>{conversation.member_names.length} members</span>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onOpenMembers}
-            className="mt-0.5 flex items-center gap-1 text-[12px] text-neutral-500 transition-colors hover:text-neutral-700"
-          >
-            <Users className="h-3 w-3" />
-            <span>{conversation.member_names.length} members</span>
-          </button>
         </div>
       </div>
 
