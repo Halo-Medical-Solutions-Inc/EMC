@@ -77,6 +77,12 @@ function MessagesContent() {
   }, [dispatch]);
 
   useEffect(() => {
+    if (!selectedConversation && isMobile) {
+      setMobileView("list");
+    }
+  }, [selectedConversation, isMobile]);
+
+  useEffect(() => {
     function handleVisibilityChange(): void {
       if (document.visibilityState === "visible" && selectedConversation) {
         dispatch(fetchMessages(selectedConversation.id));

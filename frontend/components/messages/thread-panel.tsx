@@ -8,6 +8,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -72,15 +73,24 @@ function MessageRow({
   msg,
   currentUserId,
   onToggleReaction,
+  isTapped,
+  onTap,
+  isMobile,
 }: {
   msg: ChatMessage;
   currentUserId: string;
   onToggleReaction: (messageId: string, emoji: string) => void;
+  isTapped: boolean;
+  onTap: () => void;
+  isMobile: boolean;
 }) {
   const grouped = groupReactions(msg.reactions || [], currentUserId);
 
   return (
-    <div className="group relative mb-3 rounded-md px-1 py-1 hover:bg-neutral-50">
+    <div
+      className="group relative mb-3 rounded-md px-1 py-1 hover:bg-neutral-50"
+      onClick={() => { if (isMobile) onTap(); }}
+    >
       <div className="flex items-start gap-2.5">
         <Avatar className="mt-0.5 h-7 w-7 shrink-0">
           <AvatarFallback className="bg-neutral-200 text-[10px] font-medium text-neutral-700">
@@ -127,12 +137,19 @@ function MessageRow({
         </div>
       </div>
 
-      <div className="absolute -top-2 right-1 hidden items-center gap-0.5 rounded-md border border-neutral-200 bg-white px-0.5 py-0.5 shadow-sm group-hover:flex">
+      <div
+        data-action-bar
+        className={cn(
+          "absolute -top-2 right-1 items-center gap-0.5 rounded-md border border-neutral-200 bg-white px-0.5 py-0.5 shadow-sm",
+          isMobile
+            ? (isTapped ? "flex" : "hidden")
+            : "hidden group-hover:flex"
+      )}>
         {REACTION_EMOJIS.map((emoji) => (
           <button
             key={emoji}
             type="button"
-            onClick={() => onToggleReaction(msg.id, emoji)}
+            onClick={(e) => { e.stopPropagation(); onToggleReaction(msg.id, emoji); onTap(); }}
             className="rounded px-1 py-0.5 text-[13px] transition-colors hover:bg-neutral-100"
           >
             {emoji}
@@ -155,7 +172,9 @@ export default function ThreadPanel({
   onToggleReaction,
   onBack,
 }: ThreadPanelProps) {
+  const isMobile = useIsMobile();
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [tappedMessageId, setTappedMessageId] = useState<string | null>(null);
   const [, setTick] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(0);
@@ -233,7 +252,16 @@ export default function ThreadPanel({
         )}
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto scrollbar-hide"
+        onClickCapture={(e) => {
+          const target = e.target as HTMLElement;
+          if (tappedMessageId && !target.closest("[data-action-bar]")) {
+            setTappedMessageId(null);
+          }
+        }}
+      >
         {loading ? (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
@@ -245,6 +273,9 @@ export default function ThreadPanel({
                 msg={parent}
                 currentUserId={currentUserId}
                 onToggleReaction={onToggleReaction}
+                isTapped={tappedMessageId === parent.id}
+                onTap={() => setTappedMessageId(tappedMessageId === parent.id ? null : parent.id)}
+                isMobile={isMobile}
               />
             </div>
 
@@ -264,6 +295,9 @@ export default function ThreadPanel({
                   msg={reply}
                   currentUserId={currentUserId}
                   onToggleReaction={onToggleReaction}
+                  isTapped={tappedMessageId === reply.id}
+                  onTap={() => setTappedMessageId(tappedMessageId === reply.id ? null : reply.id)}
+                  isMobile={isMobile}
                 />
               ))}
             </div>

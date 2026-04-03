@@ -8,6 +8,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -138,6 +139,8 @@ export default function ChatPanel({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [tappedMessageId, setTappedMessageId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(0);
   const isInitialLoad = useRef(true);
@@ -334,7 +337,16 @@ export default function ChatPanel({
         </div>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-4 scrollbar-hide">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide md:px-6"
+        onClickCapture={(e) => {
+          const target = e.target as HTMLElement;
+          if (tappedMessageId && !target.closest("[data-action-bar]")) {
+            setTappedMessageId(null);
+          }
+        }}
+      >
         {loading ? (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
@@ -400,10 +412,17 @@ export default function ChatPanel({
                 const isEditing = editingId === msg.id;
                 const grouped = groupReactions(msg.reactions || [], currentUserId);
 
+                const isTapped = tappedMessageId === msg.id;
+
                 return (
                   <div
                     key={msg.id}
                     className="group relative mb-2 rounded-md px-1 py-1 transition-colors hover:bg-neutral-50"
+                    onClick={() => {
+                      if (isMobile && !isEditing) {
+                        setTappedMessageId(isTapped ? null : msg.id);
+                      }
+                    }}
                   >
                     <div className="flex items-start gap-2.5">
                       <Avatar className="mt-0.5 h-7 w-7 shrink-0">
@@ -496,14 +515,22 @@ export default function ChatPanel({
                     </div>
 
                     {!isEditing && (
-                      <div className="absolute -top-3 right-1 hidden items-center gap-0.5 rounded-md border border-neutral-200 bg-white px-0.5 py-0.5 shadow-sm group-hover:flex">
+                      <div
+                        data-action-bar
+                        className={cn(
+                          "absolute -top-3 right-1 items-center gap-0.5 rounded-md border border-neutral-200 bg-white px-0.5 py-0.5 shadow-sm",
+                          isMobile
+                            ? (isTapped ? "flex" : "hidden")
+                            : "hidden group-hover:flex"
+                        )}
+                      >
                         <TooltipProvider delayDuration={200}>
                           {REACTION_EMOJIS.map((emoji) => (
                             <Tooltip key={emoji}>
                               <TooltipTrigger asChild>
                                 <button
                                   type="button"
-                                  onClick={() => onToggleReaction(msg.id, emoji)}
+                                  onClick={(e) => { e.stopPropagation(); onToggleReaction(msg.id, emoji); setTappedMessageId(null); }}
                                   className="rounded px-1 py-0.5 text-[14px] transition-colors hover:bg-neutral-100"
                                 >
                                   {emoji}
@@ -517,7 +544,7 @@ export default function ChatPanel({
                             <TooltipTrigger asChild>
                               <button
                                 type="button"
-                                onClick={() => onOpenThread(msg.id)}
+                                onClick={(e) => { e.stopPropagation(); onOpenThread(msg.id); setTappedMessageId(null); }}
                                 className="rounded p-1 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
                               >
                                 <MessageSquare className="h-3.5 w-3.5" />
@@ -531,7 +558,7 @@ export default function ChatPanel({
                                 <TooltipTrigger asChild>
                                   <button
                                     type="button"
-                                    onClick={() => handleStartEdit(msg)}
+                                    onClick={(e) => { e.stopPropagation(); handleStartEdit(msg); setTappedMessageId(null); }}
                                     className="rounded p-1 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
                                   >
                                     <Pencil className="h-3.5 w-3.5" />
@@ -543,7 +570,7 @@ export default function ChatPanel({
                                 <TooltipTrigger asChild>
                                   <button
                                     type="button"
-                                    onClick={() => onDeleteMessage(msg.id)}
+                                    onClick={(e) => { e.stopPropagation(); onDeleteMessage(msg.id); setTappedMessageId(null); }}
                                     className="rounded p-1 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
                                   >
                                     <Archive className="h-3.5 w-3.5" />
@@ -567,12 +594,12 @@ export default function ChatPanel({
 
       <div className="px-4 pb-4">
         <div className={cn(
-          "overflow-hidden rounded-lg border border-neutral-300 bg-white transition-colors focus-within:border-neutral-400",
+          "relative overflow-hidden rounded-lg border border-neutral-300 bg-white transition-colors focus-within:border-neutral-400",
           editingId && "pointer-events-none opacity-40"
         )}>
           <EditorContent editor={editor} />
           <MessageMentionPopup editor={editor} members={mentionMembers} />
-          <div className="flex items-center justify-between border-t border-neutral-200 px-1.5 py-1">
+          <div className="hidden items-center justify-between border-t border-neutral-200 px-1.5 py-1 lg:flex">
             <div className="flex items-center">
               <div className="flex items-center gap-0.5 border-r border-neutral-200 pr-1.5">
                 <button type="button" onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleBold().run(); }} className={cn("rounded p-1.5", editor?.isActive("bold") ? "bg-neutral-200 text-neutral-900" : "text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600")} tabIndex={-1}>
@@ -611,7 +638,7 @@ export default function ChatPanel({
             </div>
             <div className="flex items-center gap-2">
               {editor && !editor.isEmpty && (
-                <span className="hidden text-[11px] text-neutral-400 lg:inline">
+                <span className="text-[11px] text-neutral-400">
                   <span className="font-medium">Shift + Return</span> to add a new line
                 </span>
               )}
@@ -628,6 +655,20 @@ export default function ChatPanel({
                 )}
               </Button>
             </div>
+          </div>
+          <div className="absolute bottom-2 right-2 lg:hidden">
+            <Button
+              size="icon"
+              onClick={handleSubmit}
+              disabled={!editor || editor.isEmpty || sendingMessage}
+              className="h-7 w-7 shrink-0 rounded-lg"
+            >
+              {sendingMessage ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ArrowUp className="h-3.5 w-3.5" />
+              )}
+            </Button>
           </div>
         </div>
       </div>

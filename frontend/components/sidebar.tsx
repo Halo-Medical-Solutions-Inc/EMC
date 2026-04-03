@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store";
 import { logout } from "@/store/slices/auth-slice";
+import { closeThread, setSelectedConversation } from "@/store/slices/messages-slice";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -170,7 +171,13 @@ export function AppSidebar() {
 
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => router.push("/messages")}
+                    onClick={() => {
+                      if (pathname === "/messages") {
+                        dispatch(setSelectedConversation(null));
+                        dispatch(closeThread());
+                      }
+                      router.push("/messages");
+                    }}
                     isActive={pathname === "/messages"}
                     className="flex cursor-pointer items-center gap-3 px-3 py-2"
                     tooltip="Messages"
