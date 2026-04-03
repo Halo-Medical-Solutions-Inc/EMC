@@ -116,6 +116,8 @@ _LIST_COLUMNS = load_only(
     Call.extraction_status,
     Call.display_data_encrypted,
     Call.display_data_kid,
+    Call.extraction_data_encrypted,
+    Call.extraction_data_kid,
     Call.deleted_at,
 )
 

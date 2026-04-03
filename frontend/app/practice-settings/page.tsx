@@ -789,7 +789,13 @@ export default function PracticeSettingsPage() {
               </div>
               <div className="pt-4 border-t border-neutral-100">
                 <h3 className="text-[14px] font-semibold text-neutral-900 mb-1">Priority Level Instructions</h3>
-                <p className="text-[13px] text-neutral-500 mb-4">Define what qualifies as each priority level when calls are categorized.</p>
+                <p className="text-[13px] text-neutral-500 mb-4">
+                  Define what qualifies as each priority level when calls are categorized.
+                  <span className="flex items-center gap-1.5 mt-2 text-[12px] text-neutral-400">
+                    <span className="h-2 w-2 rounded-full bg-sky-400" />
+                    Transferred calls are automatically marked with a blue indicator.
+                  </span>
+                </p>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="priority_low" className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-700">

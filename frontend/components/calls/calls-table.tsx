@@ -151,7 +151,10 @@ export function CallsTable({
     return call.display_data?.caller_affiliation || "Unknown";
   };
 
-  const getPriorityIndicator = (priority: string): string => {
+  const getPriorityIndicator = (priority: string, call?: Call): string => {
+    if (call?.extraction_data?.auto_review) {
+      return "bg-sky-400";
+    }
     const p = priority?.toLowerCase() || "low";
     switch (p) {
       case "high":
@@ -265,7 +268,7 @@ export function CallsTable({
                             <div
                               className={cn(
                                 "h-1.5 w-1.5 rounded-full",
-                                getPriorityIndicator(priority || "low")
+                                getPriorityIndicator(priority || "low", call)
                               )}
                             />
                           )}
@@ -406,7 +409,7 @@ export function CallsTable({
                         <div
                           className={cn(
                             "w-1.5 h-1.5 rounded-full",
-                            getPriorityIndicator(priority || "low")
+                            getPriorityIndicator(priority || "low", call)
                           )}
                         />
                       )}

@@ -35,8 +35,10 @@ def _success(data: Any = None, message: str = "Success") -> Dict[str, Any]:
 
 
 def _build_call_list_responses(calls: List[Call]) -> List[Dict[str, Any]]:
-    return [
-        {
+    results = []
+    for call in calls:
+        extraction_data = call_service.decrypt_extraction_data(call)
+        results.append({
             "id": call.id,
             "twilio_call_sid": call.twilio_call_sid,
             "vapi_call_id": call.vapi_call_id,
@@ -50,12 +52,12 @@ def _build_call_list_responses(calls: List[Call]) -> List[Dict[str, Any]]:
             "created_at": call.created_at,
             "updated_at": call.updated_at,
             "display_data": call_service.decrypt_display_data(call),
+            "extraction_data": extraction_data,
             "extraction_status": call.extraction_status.value
             if call.extraction_status
             else None,
-        }
-        for call in calls
-    ]
+        })
+    return results
 
 
 @router.get("")
