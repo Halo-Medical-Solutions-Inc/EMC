@@ -376,24 +376,7 @@ function AnalyticsContent() {
   const dateRangeLabel = formatDateRange(period, offset);
 
   const StableDayButton = useCallback((props: React.ComponentProps<typeof CalendarDayButton>) => {
-    const key = format(props.day.date, "yyyy-MM-dd");
-    const bd = dailyBreakdownRef.current;
-    const stats = bd ? bd[key] : undefined;
-    const tooltip = bd === null
-      ? "Loading..."
-      : stats
-        ? `${stats.total_calls} ${stats.total_calls === 1 ? "call" : "calls"}\n${stats.needs_review} need${stats.needs_review === 1 ? "s" : ""} review`
-        : "No calls";
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <CalendarDayButton {...props} />
-        </TooltipTrigger>
-        <TooltipContent side="top" className="whitespace-pre-line text-center">
-          {tooltip}
-        </TooltipContent>
-      </Tooltip>
-    );
+    return <CalendarDayButton {...props} />;
   }, []);
 
   const calendarComponents = useMemo(() => ({ DayButton: StableDayButton }), [StableDayButton]);
