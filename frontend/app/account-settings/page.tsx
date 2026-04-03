@@ -141,18 +141,18 @@ export default function AccountSettingsPage() {
   return (
     <>
       <header className="border-b border-neutral-100 bg-white">
-        <div className="px-10 py-8">
-          <div className="mb-6">
-            <h1 className="text-[24px] font-semibold tracking-tight text-neutral-900">
+        <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-neutral-900">
               Account Settings
             </h1>
-            <p className="mt-1 text-[15px] text-neutral-500">
+            <p className="mt-1 text-[13px] sm:text-[15px] text-neutral-500">
               Manage your personal information and password.
             </p>
           </div>
         </div>
 
-        <div className="px-10">
+        <div className="px-4 sm:px-6 lg:px-10">
           <div className="flex gap-6 border-b border-neutral-100">
             {tabs.map((tab) => (
               <button
@@ -174,7 +174,7 @@ export default function AccountSettingsPage() {
         </div>
       </header>
 
-      <div className="px-10 py-6">
+      <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-10">
         <div className="max-w-2xl">
           {activeTab === "my-info" && (
             <div className="space-y-4">

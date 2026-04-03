@@ -613,18 +613,18 @@ export default function PracticeSettingsPage() {
   return (
     <>
       <header className="border-b border-neutral-100 bg-white">
-        <div className="px-10 py-8">
-          <div className="mb-6">
-            <h1 className="text-[24px] font-semibold tracking-tight text-neutral-900">
+        <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-[20px] sm:text-[24px] font-semibold tracking-tight text-neutral-900">
               Practice Settings
             </h1>
-            <p className="mt-1 text-[15px] text-neutral-500">
+            <p className="mt-1 text-[13px] sm:text-[15px] text-neutral-500">
               Manage practice details, teams, and members.
             </p>
           </div>
         </div>
 
-        <div className="px-10">
+        <div className="px-4 sm:px-6 lg:px-10">
           <div className="flex gap-6 border-b border-neutral-100">
             <button
               onClick={() => setActiveTab("teams")}
@@ -669,11 +669,11 @@ export default function PracticeSettingsPage() {
         </div>
       </header>
 
-      <div className="px-10 py-6">
+      <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-10">
         {activeTab === "general" && (
           <div className="max-w-2xl">
             <form onSubmit={handleUpdatePractice} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label
                     htmlFor="practice_name"
@@ -755,7 +755,7 @@ export default function PracticeSettingsPage() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xl:grid-cols-3 2xl:grid-cols-4">
               {teams.map((team) => (
                 <TeamCard
                   key={team.id}
@@ -811,11 +811,12 @@ export default function PracticeSettingsPage() {
               <div className="mb-8">
                 <h3 className="mb-3 text-sm font-medium text-neutral-700">Active Members</h3>
                 <div
-                  className="rounded-lg border border-neutral-100"
+                  className="overflow-x-auto rounded-lg border border-neutral-100"
                   style={{ backgroundColor: "#FDFDFD" }}
                 >
                   <div
-                    className={`grid ${isAdmin ? "grid-cols-[1fr_1fr_1fr_40px]" : "grid-cols-[1fr_1fr_1fr]"} gap-4 border-b border-neutral-100 px-4 py-3 text-[13px] font-medium text-neutral-500`}
+                    className={`grid ${isAdmin ? "grid-cols-[2fr_1fr_1.5fr_40px]" : "grid-cols-[2fr_1fr_1.5fr]"} gap-3 border-b border-neutral-100 px-4 py-3 text-[13px] font-medium text-neutral-500`}
+                    style={{ minWidth: "420px" }}
                   >
                     <div>Name</div>
                     <div>Role</div>
@@ -836,7 +837,8 @@ export default function PracticeSettingsPage() {
                     .map((usr) => (
                       <div
                         key={usr.id}
-                        className={`group grid ${isAdmin ? "grid-cols-[1fr_1fr_1fr_40px]" : "grid-cols-[1fr_1fr_1fr]"} gap-4 border-b border-neutral-50 px-4 py-4 transition-colors hover:bg-neutral-50 last:border-b-0`}
+                        className={`group grid ${isAdmin ? "grid-cols-[2fr_1fr_1.5fr_40px]" : "grid-cols-[2fr_1fr_1.5fr]"} gap-3 border-b border-neutral-50 px-4 py-3.5 transition-colors hover:bg-neutral-50 last:border-b-0`}
+                        style={{ minWidth: "420px" }}
                       >
                         <div className="flex flex-col gap-0.5">
                           <div className="text-[14px] font-medium text-neutral-900">
@@ -898,11 +900,12 @@ export default function PracticeSettingsPage() {
               <div>
                 <h3 className="mb-3 text-sm font-medium text-neutral-700">Pending Invitations</h3>
                 <div
-                  className="rounded-lg border border-neutral-100"
+                  className="overflow-x-auto rounded-lg border border-neutral-100"
                   style={{ backgroundColor: "#FDFDFD" }}
                 >
                   <div
-                    className={`grid ${isAdmin ? "grid-cols-[1fr_1fr_1fr_1fr_40px]" : "grid-cols-[1fr_1fr_1fr_1fr]"} gap-4 border-b border-neutral-100 px-4 py-3 text-[13px] font-medium text-neutral-500`}
+                    className={`grid ${isAdmin ? "grid-cols-[2fr_0.8fr_1.2fr_1fr_40px]" : "grid-cols-[2fr_0.8fr_1.2fr_1fr]"} gap-3 border-b border-neutral-100 px-4 py-3 text-[13px] font-medium text-neutral-500`}
+                    style={{ minWidth: "480px" }}
                   >
                     <div>Email</div>
                     <div>Role</div>
@@ -914,7 +917,8 @@ export default function PracticeSettingsPage() {
                   {pendingInvitations.map((invitation) => (
                     <div
                       key={invitation.id}
-                      className={`group grid ${isAdmin ? "grid-cols-[1fr_1fr_1fr_1fr_40px]" : "grid-cols-[1fr_1fr_1fr_1fr]"} gap-4 border-b border-neutral-50 px-4 py-4 transition-colors hover:bg-neutral-50 last:border-b-0`}
+                      className={`group grid ${isAdmin ? "grid-cols-[2fr_0.8fr_1.2fr_1fr_40px]" : "grid-cols-[2fr_0.8fr_1.2fr_1fr]"} gap-3 border-b border-neutral-50 px-4 py-3.5 transition-colors hover:bg-neutral-50 last:border-b-0`}
+                      style={{ minWidth: "480px" }}
                     >
                       <div className="flex items-center text-[14px] font-medium text-neutral-900">
                         {invitation.email}
