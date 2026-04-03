@@ -465,6 +465,16 @@ async def ensure_defaults(db: AsyncSession) -> None:
     await db.commit()
 
 
+async def is_halohealth_user(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> bool:
+    user = await db.get(User, user_id)
+    if user is None:
+        return False
+    return _email_is_halohealth(user.email)
+
+
 async def is_support_channel(
     db: AsyncSession,
     conversation_id: uuid.UUID,

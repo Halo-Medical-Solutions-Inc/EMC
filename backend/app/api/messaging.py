@@ -155,11 +155,15 @@ async def send_message(
         member_ids=member_ids,
     )
 
-    if await messaging_service.is_support_channel(
-        db, conversation_id
-    ) or await messaging_service.should_slack_notify_halohealth_dm(
+    is_halo_user = await messaging_service.is_halohealth_user(db, current_user.id)
+    should_notify = False
+    if not is_halo_user and await messaging_service.is_support_channel(db, conversation_id):
+        should_notify = True
+    if not is_halo_user and await messaging_service.should_slack_notify_halohealth_dm(
         db, conversation_id, current_user.id
     ):
+        should_notify = True
+    if should_notify:
         try:
             await slack_notify_service.notify_platform_support_message(
                 author_name=current_user.full_name or "Someone",
