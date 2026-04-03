@@ -113,7 +113,7 @@ export const EMOJI_GRID = [
 ];
 
 export const EDITOR_CLASSES =
-  "w-full min-h-[36px] max-h-[160px] overflow-y-auto px-3 pt-3 pb-2 text-[13px] leading-5 text-neutral-900 outline-none [&_p]:mb-0 [&_p:not(:last-child)]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_s]:text-neutral-500 [&_a]:text-blue-600 [&_a]:underline";
+  "w-full min-h-[36px] max-h-[160px] overflow-y-auto px-3 pt-3 pb-2 text-base leading-5 text-neutral-900 outline-none lg:text-[13px] [&_p]:mb-0 [&_p:not(:last-child)]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_s]:text-neutral-500 [&_a]:text-blue-600 [&_a]:underline";
 
 export const EDITOR_CLASSES_SM =
-  "w-full min-h-[40px] max-h-[128px] overflow-y-auto px-3 pt-3 pb-2 text-[13px] leading-5 text-neutral-900 outline-none [&_p]:mb-0 [&_p:not(:last-child)]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_s]:text-neutral-500 [&_a]:text-blue-600 [&_a]:underline";
+  "w-full min-h-[40px] max-h-[128px] overflow-y-auto px-3 pt-3 pb-2 text-base leading-5 text-neutral-900 outline-none lg:text-[13px] [&_p]:mb-0 [&_p:not(:last-child)]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_s]:text-neutral-500 [&_a]:text-blue-600 [&_a]:underline";

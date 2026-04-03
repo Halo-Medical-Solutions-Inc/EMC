@@ -226,6 +226,7 @@ export default function ChatPanel({
     if (!editor || editor.isEmpty || sendingMessage) return;
     onSendMessage(editor.getHTML());
     editor.commands.clearContent();
+    editor.commands.blur();
   }, [editor, sendingMessage, onSendMessage]);
 
   useEffect(() => { submitRef.current = handleSubmit; }, [handleSubmit]);
@@ -610,7 +611,7 @@ export default function ChatPanel({
             </div>
             <div className="flex items-center gap-2">
               {editor && !editor.isEmpty && (
-                <span className="text-[11px] text-neutral-400">
+                <span className="hidden text-[11px] text-neutral-400 lg:inline">
                   <span className="font-medium">Shift + Return</span> to add a new line
                 </span>
               )}

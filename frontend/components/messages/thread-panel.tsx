@@ -207,6 +207,7 @@ export default function ThreadPanel({
     if (!editor || editor.isEmpty || sendingMessage) return;
     onSendReply(editor.getHTML());
     editor.commands.clearContent();
+    editor.commands.blur();
   }, [editor, sendingMessage, onSendReply]);
 
   useEffect(() => { submitRef.current = handleSubmit; }, [handleSubmit]);
