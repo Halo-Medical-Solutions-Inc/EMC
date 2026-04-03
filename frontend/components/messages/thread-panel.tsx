@@ -172,7 +172,7 @@ export default function ThreadPanel({
   onToggleReaction,
   onBack,
 }: ThreadPanelProps) {
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [tappedMessageId, setTappedMessageId] = useState<string | null>(null);
   const [, setTick] = useState(0);

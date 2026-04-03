@@ -55,7 +55,7 @@ function DashboardContent() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
   const { calls, selectedCall, loading, detailLoading } = useAppSelector(
     (state) => state.calls
   );

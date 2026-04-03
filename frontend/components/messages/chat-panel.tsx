@@ -140,7 +140,7 @@ export default function ChatPanel({
   const [editValue, setEditValue] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [tappedMessageId, setTappedMessageId] = useState<string | null>(null);
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(0);
   const isInitialLoad = useRef(true);

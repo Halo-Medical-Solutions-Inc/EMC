@@ -50,7 +50,7 @@ type MobileView = "list" | "chat" | "thread";
 function MessagesContent() {
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
-  const isMobile = useIsMobile();
+  const { isMobile, ready: mobileReady } = useIsMobile();
   const { user } = useAppSelector((state) => state.auth);
   const { users } = useAppSelector((state) => state.users);
   const {
@@ -123,7 +123,7 @@ function MessagesContent() {
       }
     }
 
-    if (!selectedConversation && isMobile === false) {
+    if (!selectedConversation && mobileReady && !isMobile) {
       const defaultChannel = conversations.find(
         (c) => c.type === ConversationType.CHANNEL && c.is_default && c.name === "Eye Medical Center",
       );
@@ -131,7 +131,7 @@ function MessagesContent() {
         handleSelectConversation(defaultChannel);
       }
     }
-  }, [conversations, selectedConversation, handleSelectConversation, searchParams, handledConversationParam, isMobile]);
+  }, [conversations, selectedConversation, handleSelectConversation, searchParams, handledConversationParam, isMobile, mobileReady]);
 
   const handleSendMessage = useCallback(
     async (content: string) => {

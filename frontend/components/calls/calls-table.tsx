@@ -216,7 +216,7 @@ export function CallsTable({
     );
   }
 
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
   const groupedCalls = groupCallsByDate(calls);
 
   if (isMobile) {

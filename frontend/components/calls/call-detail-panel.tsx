@@ -98,7 +98,7 @@ export function CallDetailPanel({
   currentUser,
   practiceTeams,
 }: CallDetailPanelProps) {
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
   const [isClosing, setIsClosing] = useState(false);
   const [visible, setVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "admin">("overview");
@@ -738,7 +738,7 @@ export function CallDetailPanel({
                         onSubmit={handleAddComment}
                         users={users}
                         disabled={savingComment}
-                        placeholder="Add a comment..."
+                        placeholder="Add a comment — use @ to mention"
                       />
                       <Tooltip>
                         <TooltipTrigger asChild>
