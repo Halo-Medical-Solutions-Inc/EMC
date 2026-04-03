@@ -57,7 +57,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import apiClient from "@/lib/api-client";
-import { extractTransferInfo, formatCallDateTime, formatCommentTimestamp, formatPhoneNumber } from "@/lib/call-utils";
+import { extractTransferInfo, formatCallDateTime, formatCallDateTimeShort, formatCommentTimestamp, formatPhoneNumber } from "@/lib/call-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ApiResponse } from "@/types/api";
@@ -287,12 +287,15 @@ export function CallDetailPanel({
     }
   }
 
+  const panelIsFullScreen = isMobile || !isLargeScreen;
+
+  const dateStr = panelIsFullScreen
+    ? formatCallDateTimeShort(call.created_at)
+    : formatCallDateTime(call.created_at);
   const headerSubline =
     headerDurationStr !== ""
-      ? `${formatCallDateTime(call.created_at)} · ${headerDurationStr}`
-      : formatCallDateTime(call.created_at);
-
-  const panelIsFullScreen = isMobile || !isLargeScreen;
+      ? `${dateStr} · ${headerDurationStr}`
+      : dateStr;
   const phoneInline = !panelIsFullScreen;
 
   return (

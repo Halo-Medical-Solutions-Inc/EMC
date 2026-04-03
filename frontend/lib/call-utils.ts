@@ -58,6 +58,19 @@ export function formatCallDateTime(timestamp: string): string {
   });
 }
 
+export function formatCallDateTimeShort(timestamp: string): string {
+  const date = new Date(timestamp);
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  const y = String(date.getFullYear()).slice(-2);
+  const time = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return `${m}/${d}/${y}, ${time}`;
+}
+
 export function getStatusColor(status: CallStatus): string {
   switch (status) {
     case CallStatus.IN_PROGRESS:

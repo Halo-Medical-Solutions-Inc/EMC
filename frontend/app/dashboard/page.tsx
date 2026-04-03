@@ -680,7 +680,7 @@ function DashboardContent() {
                         handleRemoveTab(tab.id);
                       }
                     }}
-                    className="ml-1 p-0.5 rounded hover:bg-neutral-200 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer inline-flex"
+                    className="ml-1 p-0.5 rounded hover:bg-neutral-200 opacity-100 transition-opacity cursor-pointer inline-flex lg:opacity-0 lg:group-hover:opacity-100"
                   >
                     <X className="h-3 w-3 text-neutral-500" />
                   </span>
