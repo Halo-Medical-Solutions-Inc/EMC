@@ -99,6 +99,8 @@ export function CallDetailPanel({
   practiceTeams,
 }: CallDetailPanelProps) {
   const isMobile = useIsMobile();
+  const [isClosing, setIsClosing] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "admin">("overview");
   const [comments, setComments] = useState<CallComment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -114,6 +116,27 @@ export function CallDetailPanel({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loadingDelete, setLoadingDelete] = useState(false);
   const [teamsPopoverOpen, setTeamsPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && call) {
+      setIsClosing(false);
+      setVisible(true);
+    } else if (visible) {
+      setIsClosing(true);
+      const timer = setTimeout(() => {
+        setVisible(false);
+        setIsClosing(false);
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [open, call]);
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 250);
+  }, [onClose]);
 
   const fetchComments = useCallback(async () => {
     if (!call?.id) return;
@@ -246,7 +269,7 @@ export function CallDetailPanel({
     await onUpdateTeams(call.id, newTeams);
   };
 
-  if (!open || !call) return null;
+  if (!visible || !call) return null;
 
   const artifact = call.vapi_data?.artifact;
   const extractionData = call.extraction_data;
@@ -298,7 +321,12 @@ export function CallDetailPanel({
 
   return (
     <div
-      className="fixed right-0 top-0 z-50 animate-in slide-in-from-right duration-300 border-l border-neutral-200 bg-white"
+      className={cn(
+        "fixed right-0 top-0 z-50 border-l border-neutral-200 bg-white duration-250 ease-out fill-mode-forwards",
+        isClosing
+          ? "animate-out slide-out-to-right"
+          : "animate-in slide-in-from-right"
+      )}
       style={{
         height: "100dvh",
         width: panelIsFullScreen ? "calc(100% - 3rem)" : "calc(50vw - 1.5rem)",
@@ -356,7 +384,7 @@ export function CallDetailPanel({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onClose}
+                onClick={handleClose}
                 className="h-8 w-8 p-0"
               >
                 <X className="h-4 w-4" />

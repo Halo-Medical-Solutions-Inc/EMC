@@ -121,6 +121,12 @@ function DashboardContent() {
   }, [isPanelOpen, selectedCall, dispatch]);
 
   useEffect(() => {
+    if (!selectedCall && isPanelOpen) {
+      setIsPanelOpen(false);
+    }
+  }, [selectedCall, isPanelOpen]);
+
+  useEffect(() => {
     const dates: string[] = [];
     for (let i = 0; i < 7; i++) {
       const date = new Date(selectedDate);
@@ -732,7 +738,7 @@ function DashboardContent() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
               <Input
                 type="text"
-                placeholder="Search calls..."
+                placeholder="Search calls"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -740,7 +746,7 @@ function DashboardContent() {
                     router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
                   }
                 }}
-                className={cn("pl-9 h-9 border-neutral-200 bg-white", searchQuery && "pr-8")}
+                className={cn("pl-9 h-8 border-neutral-200 bg-white text-neutral-600 md:h-9 md:text-neutral-900", searchQuery && "pr-8")}
               />
               {searchQuery && (
                 <button

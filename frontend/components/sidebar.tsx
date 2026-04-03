@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store";
 import { logout } from "@/store/slices/auth-slice";
+import { clearSelectedCall } from "@/store/slices/calls-slice";
 import { closeThread, setSelectedConversation } from "@/store/slices/messages-slice";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -140,7 +141,12 @@ export function AppSidebar() {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => router.push("/dashboard")}
+                    onClick={() => {
+                      if (pathname === "/dashboard") {
+                        dispatch(clearSelectedCall());
+                      }
+                      router.push("/dashboard");
+                    }}
                     isActive={pathname === "/dashboard"}
                     className="flex cursor-pointer items-center gap-3 px-3 py-2"
                     tooltip="Dashboard"
