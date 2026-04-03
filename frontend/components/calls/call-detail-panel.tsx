@@ -289,13 +289,11 @@ export function CallDetailPanel({
 
   const panelIsFullScreen = isMobile || !isLargeScreen;
 
-  const dateStr = panelIsFullScreen
+  const headerSubline = panelIsFullScreen
     ? formatCallDateTimeShort(call.created_at)
-    : formatCallDateTime(call.created_at);
-  const headerSubline =
-    headerDurationStr !== ""
-      ? `${dateStr} · ${headerDurationStr}`
-      : dateStr;
+    : headerDurationStr !== ""
+      ? `${formatCallDateTime(call.created_at)} · ${headerDurationStr}`
+      : formatCallDateTime(call.created_at);
   const phoneInline = !panelIsFullScreen;
 
   return (
@@ -328,7 +326,7 @@ export function CallDetailPanel({
                   <h3 className="truncate text-lg font-semibold leading-tight tracking-tight text-neutral-900 lg:text-xl">
                     {headerName}
                   </h3>
-                  <p className="mt-1 min-w-0 truncate text-[11px] leading-snug tabular-nums text-neutral-400 lg:text-xs">
+                  <p className="mt-1 min-w-0 truncate text-xs leading-snug tabular-nums text-neutral-400">
                     {phoneNumber ? formatPhoneNumber(phoneNumber) : "No phone number"}
                     <span className="mx-1.5">·</span>
                     {headerSubline}
