@@ -22,9 +22,23 @@ from app.services.call_service import decrypt_extraction_data, decrypt_vapi_data
 
 SYSTEM_AUTO_REVIEW_UUID = uuid.UUID("9dd1b08b-7c96-4447-9f33-3c425319cefb")
 
-EXTENSION_LABELS: Dict[str, str] = {}
+EXTENSION_LABELS: Dict[str, str] = {
+    "1000": "Scheduling (English)",
+    "1002": "Scheduling (Spanish)",
+    "3020": "Dr. Ghajar Surgery Scheduler",
+    "5074": "Retina",
+}
 
-PHONE_NUMBER_LABELS: Dict[str, str] = {}
+PHONE_NUMBER_LABELS: Dict[str, str] = {
+    "5594495046": "Dr. Ghajar's Office",
+    "15594495046": "Dr. Ghajar's Office",
+    "5594865000": "Eye Medical Center",
+    "15594865000": "Eye Medical Center",
+    "5598783024": "Referrals",
+    "15598783024": "Referrals",
+    "5594495024": "Billing",
+    "15594495024": "Billing",
+}
 
 
 async def _get_provider_names_list(db: AsyncSession) -> List[str]:
