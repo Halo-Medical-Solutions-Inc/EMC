@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import SankeyMobileStepper from "@/components/analytics/sankey-mobile-stepper";
 import {
   SankeyDiagram,
   SankeyLink,
@@ -671,8 +672,8 @@ function AnalyticsContent() {
       }}
     >
       <header className="sticky top-0 z-10 bg-white">
-        <div className="px-10 py-8">
-          <div className="flex items-start justify-between">
+        <div className="px-4 sm:px-6 lg:px-10 py-4 sm:py-6 lg:py-8">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex-1">
               <h1 className="text-[24px] font-semibold tracking-tight text-neutral-900">Analytics</h1>
               <p className="mt-1 text-[15px] text-neutral-500">Call analytics and performance metrics</p>
@@ -801,7 +802,7 @@ function AnalyticsContent() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-10 py-6 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-10 py-4 sm:py-6 scrollbar-hide">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24">
             <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
@@ -837,7 +838,7 @@ function AnalyticsContent() {
               />
             </div>
 
-            <div className="border border-neutral-200 bg-white p-6">
+            <div className="border border-neutral-200 bg-white p-3 sm:p-4 md:p-6">
               <h2 className="text-[15px] font-semibold text-neutral-900 mb-4">Call Flow</h2>
               <Tabs defaultValue="by_intent" onValueChange={() => handleCloseDrillDown()}>
                 <TabsList>
@@ -845,18 +846,36 @@ function AnalyticsContent() {
                   <TabsTrigger value="by_doctor">By Doctor</TabsTrigger>
                 </TabsList>
                 <TabsContent value="by_intent">
-                  <SankeyDiagram
-                    nodes={sankeyDataByIntent.nodes}
-                    links={sankeyDataByIntent.links}
-                    onNodeClick={period === "1d" ? (node) => handleSankeyNodeClick(node, "by_intent") : undefined}
-                  />
+                  <div className="hidden sm:block">
+                    <SankeyDiagram
+                      nodes={sankeyDataByIntent.nodes}
+                      links={sankeyDataByIntent.links}
+                      onNodeClick={period === "1d" ? (node) => handleSankeyNodeClick(node, "by_intent") : undefined}
+                    />
+                  </div>
+                  <div className="sm:hidden">
+                    <SankeyMobileStepper
+                      nodes={sankeyDataByIntent.nodes}
+                      links={sankeyDataByIntent.links}
+                      onNodeClick={period === "1d" ? (node) => handleSankeyNodeClick(node, "by_intent") : undefined}
+                    />
+                  </div>
                 </TabsContent>
                 <TabsContent value="by_doctor">
-                  <SankeyDiagram
-                    nodes={sankeyDataByDoctor.nodes}
-                    links={sankeyDataByDoctor.links}
-                    onNodeClick={period === "1d" ? (node) => handleSankeyNodeClick(node, "by_doctor") : undefined}
-                  />
+                  <div className="hidden sm:block">
+                    <SankeyDiagram
+                      nodes={sankeyDataByDoctor.nodes}
+                      links={sankeyDataByDoctor.links}
+                      onNodeClick={period === "1d" ? (node) => handleSankeyNodeClick(node, "by_doctor") : undefined}
+                    />
+                  </div>
+                  <div className="sm:hidden">
+                    <SankeyMobileStepper
+                      nodes={sankeyDataByDoctor.nodes}
+                      links={sankeyDataByDoctor.links}
+                      onNodeClick={period === "1d" ? (node) => handleSankeyNodeClick(node, "by_doctor") : undefined}
+                    />
+                  </div>
                 </TabsContent>
               </Tabs>
 
@@ -943,8 +962,50 @@ function AnalyticsContent() {
 
             <div>
               <h2 className="text-[15px] font-semibold text-neutral-900 mb-4">Doctor Breakdown</h2>
+
+              <div className="sm:hidden border border-neutral-200 bg-white">
+                {sortedDoctors.length === 0 ? (
+                  <div className="p-6 text-center text-neutral-500 text-[13px]">
+                    No data available for this period
+                  </div>
+                ) : (
+                  <div className="divide-y divide-neutral-100">
+                    {sortedDoctors.map((doctor) => {
+                      const reviewPct = Math.round(doctor.review_completion_rate * 100);
+                      return (
+                        <div key={doctor.doctor_name} className="px-4 py-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[13px] font-semibold text-neutral-900 truncate">{doctor.doctor_name}</span>
+                            <span className="shrink-0 text-[14px] font-bold tabular-nums text-neutral-900 ml-3">{doctor.total_calls}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="h-1.5 flex-1 rounded-full bg-neutral-100 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-emerald-500 transition-all"
+                                style={{ width: `${reviewPct}%` }}
+                              />
+                            </div>
+                            <span className="shrink-0 text-[11px] tabular-nums text-neutral-500">{reviewPct}%</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] text-neutral-400">
+                            {doctor.needs_review > 0 && (
+                              <span className="text-amber-600 font-medium">{doctor.needs_review} needs review</span>
+                            )}
+                            <span>
+                              {doctor.avg_review_time_minutes !== null
+                                ? `Avg ${formatReviewTime(doctor.avg_review_time_minutes)}`
+                                : "No reviews"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <TooltipProvider delayDuration={200}>
-                <div className="border border-neutral-200 bg-white overflow-x-auto">
+                <div className="hidden sm:block border border-neutral-200 bg-white overflow-x-auto">
                   <Table style={{ tableLayout: "fixed", minWidth: "650px", width: "100%" }}>
                     <colgroup>
                       <col style={{ width: "30%" }} />

@@ -37,9 +37,9 @@ interface PositionedLink {
 const NODE_WIDTH = 10;
 const NODE_GAP = 10;
 const MIN_NODE_HEIGHT = 4;
-const CHART_WIDTH = 800;
+const CHART_WIDTH = 1000;
 const CHART_HEIGHT = 560;
-const PADDING = { top: 20, bottom: 20, left: 8, right: 8 };
+const PADDING = { top: 20, bottom: 20, left: 120, right: 120 };
 
 function computeLayout(
   nodes: SankeyNode[],
@@ -197,7 +197,8 @@ export function SankeyDiagram({
   }
 
   return (
-    <div className="relative" style={{ height: CHART_HEIGHT }}>
+    <div className="relative overflow-x-auto">
+      <div style={{ minWidth: 700, height: CHART_HEIGHT }}>
       <svg
         viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
         className="w-full h-full cursor-default"
@@ -315,6 +316,7 @@ export function SankeyDiagram({
           );
         })}
       </svg>
+      </div>
     </div>
   );
 }
