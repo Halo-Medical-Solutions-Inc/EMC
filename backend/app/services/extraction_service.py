@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 
 from app.database.session import AsyncSessionLocal
-from app.models.call import ExtractionStatus
+from app.models.call import Call, ExtractionStatus
 from app.services import practice_service
 from app.services.claude_service import claude_service
 from app.services.extraction_schema import (
@@ -101,39 +101,63 @@ async def run_extraction(call_id: UUID) -> None:
 
                 review_update = await _try_auto_review(db, call, extraction_result)
 
-                update_payload: Dict[str, Any] = {}
-                if review_update:
-                    update_payload.update(review_update)
-
                 await _broadcast_extraction_update(
                     call_id,
                     ExtractionStatus.COMPLETED,
                     extraction_result,
                     display_data,
+                    extra_event_fields=review_update,
                 )
             else:
                 await call_service.update_extraction_status(
                     db, call, ExtractionStatus.FAILED
                 )
+                reviewed_call = await call_service.update_review_status(
+                    db, call.id, is_reviewed=True, reviewed_by=None
+                )
                 print(f"[EXTRACTION] Extraction failed for call {call_id}")
                 await _broadcast_extraction_update(
-                    call_id, ExtractionStatus.FAILED
+                    call_id,
+                    ExtractionStatus.FAILED,
+                    extra_event_fields=_review_fields_from_call(reviewed_call),
                 )
 
     except Exception as e:
         print(f"[EXTRACTION] Error during extraction for call {call_id}: {e}")
+        reviewed_call = None
         async with AsyncSessionLocal() as db:
             call = await call_service.get_call_by_id(db, call_id)
             if call:
                 await call_service.update_extraction_status(
                     db, call, ExtractionStatus.FAILED
                 )
-        await _broadcast_extraction_update(call_id, ExtractionStatus.FAILED)
+                reviewed_call = await call_service.update_review_status(
+                    db, call.id, is_reviewed=True, reviewed_by=None
+                )
+        await _broadcast_extraction_update(
+            call_id,
+            ExtractionStatus.FAILED,
+            extra_event_fields=_review_fields_from_call(reviewed_call),
+        )
+
+
+def _review_fields_from_call(
+    reviewed_call: Optional[Call],
+) -> Optional[Dict[str, Any]]:
+    if reviewed_call is None:
+        return None
+    return {
+        "is_reviewed": reviewed_call.is_reviewed,
+        "reviewed_by": reviewed_call.reviewed_by,
+        "reviewed_at": reviewed_call.reviewed_at.isoformat()
+        if reviewed_call.reviewed_at
+        else None,
+    }
 
 
 async def _try_auto_review(
     db: "AsyncSession",
-    call: "Call",
+    call: Call,
     extraction_data: Dict[str, Any],
 ) -> Optional[Dict[str, Any]]:
     from app.services import call_service
@@ -167,6 +191,7 @@ async def _broadcast_extraction_update(
     extraction_data: Optional[Dict[str, Any]] = None,
     display_data: Optional[Dict[str, Any]] = None,
     sms_fields: Optional[Dict[str, Any]] = None,
+    extra_event_fields: Optional[Dict[str, Any]] = None,
 ) -> None:
     update_data: Dict[str, Any] = {
         "id": str(call_id),
@@ -178,6 +203,8 @@ async def _broadcast_extraction_update(
         update_data["display_data"] = display_data
     if sms_fields:
         update_data.update(sms_fields)
+    if extra_event_fields:
+        update_data.update(extra_event_fields)
     await publish_event("call_updated", update_data)
 
 

@@ -39,9 +39,14 @@ async def _recover_single_call(db: AsyncSession, call) -> None:
 
         vapi_status = vapi_data.get("status", "")
         if vapi_status == "ended":
-            await call_completion_service.complete_call_with_vapi_data(
-                db, call.id, vapi_data
-            )
+            if call_completion_service.should_soft_delete_vapi_ended_call(vapi_data):
+                await call_completion_service.discard_inbound_call_after_vapi_ended(
+                    db, call.id, vapi_data
+                )
+            else:
+                await call_completion_service.complete_call_with_vapi_data(
+                    db, call.id, vapi_data
+                )
         else:
             await call_completion_service.fail_call(
                 db, call.id, f"VAPI call status: {vapi_status}"

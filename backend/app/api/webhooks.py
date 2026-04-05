@@ -161,6 +161,12 @@ async def _handle_end_of_call(db: AsyncSession, body: Dict[str, Any]) -> None:
         print(f"VAPI end-of-call: call not found for VAPI ID {vapi_call_id}")
         return
 
+    if call_completion_service.should_soft_delete_vapi_ended_call(message):
+        await call_completion_service.discard_inbound_call_after_vapi_ended(
+            db, call.id, message
+        )
+        return
+
     await call_completion_service.complete_call_with_vapi_data(db, call.id, message)
 
 
