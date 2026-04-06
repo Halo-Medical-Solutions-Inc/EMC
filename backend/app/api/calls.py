@@ -24,7 +24,14 @@ from app.schemas.call import (
     CallTeamsUpdate,
 )
 from app.schemas.call_comment import CallCommentCreate, CallCommentResponse
-from app.services import audit_service, call_comment_service, call_service, mention_service, publisher_service
+from app.services import (
+    audit_service,
+    call_comment_service,
+    call_service,
+    mention_service,
+    publisher_service,
+    slack_notify_service,
+)
 from app.utils.errors import AppError
 
 router = APIRouter(prefix="/api/calls", tags=["calls"])
@@ -190,6 +197,18 @@ async def add_call_comment(
         comment_id=comment.id,
         exclude_user_ids=at_mentioned_ids,
     )
+
+    try:
+        await slack_notify_service.maybe_notify_internal_call_comment_slack(
+            db=db,
+            call_id=call_id,
+            comment_id=comment.id,
+            author_id=current_user.id,
+            content=comment.content,
+            at_mentioned_user_ids=at_mentioned_ids,
+        )
+    except Exception as exc:
+        print(f"Slack notify error: {exc}")
 
     return _success(
         {

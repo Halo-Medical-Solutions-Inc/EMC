@@ -1,10 +1,15 @@
 import html
 import re
 import uuid
+from typing import List
 
 import httpx
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.models.comment_mention import CommentMention
+from app.models.user import User
 
 
 def _preview_text(content: str, max_len: int) -> str:
@@ -106,4 +111,72 @@ async def notify_platform_support_message(
     conversation_id: uuid.UUID,
 ) -> None:
     text = _messaging_slack_text(author_name, content, conversation_id)
+    await _post_support_channel_text(text)
+
+
+def _call_comment_slack_text(
+    author_name: str,
+    content: str,
+    call_id: uuid.UUID,
+    slack_user_id: str,
+) -> str:
+    preview = _preview_text(content, 280)
+    base = settings.FRONTEND_URL.rstrip("/")
+    link = f"{base}/dashboard?call={call_id}"
+    first = _safe_slack_plain(_first_name(author_name))
+    practice = _safe_slack_plain(settings.FROM_NAME)
+    quoted = _quoted_preview(preview)
+    ping = ""
+    sid = (slack_user_id or "").strip()
+    if sid:
+        ping = f"\n<@{sid}>"
+    return (
+        f"{practice} — Call comment ({first})\n\n"
+        f"{quoted}\n\n"
+        f"→ <{link}|View call in Halo>"
+        f"{ping}"
+    )
+
+
+async def maybe_notify_internal_call_comment_slack(
+    db: AsyncSession,
+    call_id: uuid.UUID,
+    comment_id: uuid.UUID,
+    author_id: uuid.UUID,
+    content: str,
+    at_mentioned_user_ids: List[uuid.UUID],
+) -> None:
+    email = settings.INTERNAL_CALL_COMMENT_NOTIFY_EMAIL.strip().lower()
+    if not email:
+        return
+
+    result = await db.execute(select(User).where(func.lower(User.email) == email))
+    target = result.scalar_one_or_none()
+    if target is None:
+        return
+
+    if author_id == target.id:
+        return
+
+    is_direct = target.id in at_mentioned_user_ids
+    if not is_direct:
+        prior = await db.execute(
+            select(CommentMention.id).where(
+                CommentMention.call_id == call_id,
+                CommentMention.user_id == target.id,
+                CommentMention.source == "call_comment",
+                CommentMention.comment_id != comment_id,
+            ).limit(1)
+        )
+        if prior.scalar_one_or_none() is None:
+            return
+
+    author = await db.get(User, author_id)
+    author_name = author.full_name if author else "Someone"
+    text = _call_comment_slack_text(
+        author_name,
+        content,
+        call_id,
+        settings.SLACK_INTERNAL_CALL_MENTION_USER_ID,
+    )
     await _post_support_channel_text(text)

@@ -15,6 +15,21 @@ from app.services.extraction_schema import (
 from app.services.publisher_service import publish_event
 
 
+def _vapi_transfer_confirmed(vapi_data: Dict[str, Any]) -> bool:
+    if vapi_data.get("endedReason") == "assistant-forwarded-call":
+        return True
+    messages = vapi_data.get("artifact", {}).get("messages", []) or vapi_data.get(
+        "messages", []
+    )
+    for msg in messages:
+        if msg.get("role") != "tool_calls":
+            continue
+        for tool_call in msg.get("toolCalls", []):
+            if tool_call.get("function", {}).get("name") == "transfer_call_tool":
+                return True
+    return False
+
+
 async def run_extraction(call_id: UUID) -> None:
     print(f"[EXTRACTION] Starting extraction for call {call_id}")
 
@@ -99,7 +114,9 @@ async def run_extraction(call_id: UUID) -> None:
 
                 print(f"[EXTRACTION] Extraction completed for call {call_id}")
 
-                review_update = await _try_auto_review(db, call, extraction_result)
+                review_update = await _try_auto_review(
+                    db, call, extraction_result, vapi_data
+                )
 
                 await _broadcast_extraction_update(
                     call_id,
@@ -112,57 +129,37 @@ async def run_extraction(call_id: UUID) -> None:
                 await call_service.update_extraction_status(
                     db, call, ExtractionStatus.FAILED
                 )
-                reviewed_call = await call_service.update_review_status(
-                    db, call.id, is_reviewed=True, reviewed_by=None
-                )
                 print(f"[EXTRACTION] Extraction failed for call {call_id}")
                 await _broadcast_extraction_update(
                     call_id,
                     ExtractionStatus.FAILED,
-                    extra_event_fields=_review_fields_from_call(reviewed_call),
                 )
 
     except Exception as e:
         print(f"[EXTRACTION] Error during extraction for call {call_id}: {e}")
-        reviewed_call = None
         async with AsyncSessionLocal() as db:
             call = await call_service.get_call_by_id(db, call_id)
             if call:
                 await call_service.update_extraction_status(
                     db, call, ExtractionStatus.FAILED
                 )
-                reviewed_call = await call_service.update_review_status(
-                    db, call.id, is_reviewed=True, reviewed_by=None
-                )
         await _broadcast_extraction_update(
             call_id,
             ExtractionStatus.FAILED,
-            extra_event_fields=_review_fields_from_call(reviewed_call),
         )
-
-
-def _review_fields_from_call(
-    reviewed_call: Optional[Call],
-) -> Optional[Dict[str, Any]]:
-    if reviewed_call is None:
-        return None
-    return {
-        "is_reviewed": reviewed_call.is_reviewed,
-        "reviewed_by": reviewed_call.reviewed_by,
-        "reviewed_at": reviewed_call.reviewed_at.isoformat()
-        if reviewed_call.reviewed_at
-        else None,
-    }
 
 
 async def _try_auto_review(
     db: "AsyncSession",
     call: Call,
     extraction_data: Dict[str, Any],
+    vapi_data: Dict[str, Any],
 ) -> Optional[Dict[str, Any]]:
     from app.services import call_service
 
-    should_auto_review = extraction_data.get("auto_review", False)
+    transferred = _vapi_transfer_confirmed(vapi_data)
+    model_auto_review = extraction_data.get("auto_review", False) is True
+    should_auto_review = model_auto_review or transferred
     if not should_auto_review:
         return None
 
@@ -174,7 +171,10 @@ async def _try_auto_review(
     if reviewed_call is None:
         return None
 
-    print(f"[EXTRACTION] Auto-reviewed call {call.id}")
+    if transferred and not model_auto_review:
+        print(f"[EXTRACTION] Auto-reviewed call {call.id} (VAPI transfer confirmed)")
+    else:
+        print(f"[EXTRACTION] Auto-reviewed call {call.id}")
 
     return {
         "is_reviewed": True,

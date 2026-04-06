@@ -199,13 +199,18 @@ def build_extraction_schema(
             "type": "boolean",
             "description": (
                 "Whether this call can be automatically marked as reviewed without human review. "
-                "Set to true ONLY for spam, wrong numbers, robocalls, abandoned calls with no "
-                "meaningful content, or calls where no human follow-up action is needed. "
-                "Also set to true if the call was transferred to a live person, since staff "
-                "already handled it during the transfer. "
-                "Set to false for ANY call that requires staff action such as scheduling, "
-                "callbacks, prescription refills, test results, referrals, authorizations, "
-                "medical records requests, or any legitimate patient call that was NOT transferred. "
+                "Set to true ONLY for spam, wrong numbers, robocalls, or abandoned calls with no "
+                "meaningful content. "
+                "Set to true if the call was transferred to a live person AND the patient needed "
+                "nothing further from this practice after the transfer (no callback, no message "
+                "for staff, no prescription or paperwork issue left open). "
+                "Set to false if ANY of the following apply — this list is not exhaustive: "
+                "scheduling or appointment changes; callbacks; prescription or medication issues "
+                "(refill, redirect, pharmacy cannot fill, dosage, timing); post-injection or "
+                "post-procedure symptoms or pain; urgent or same-day requests; messages for a "
+                "doctor or team; test results; referrals; authorizations; medical records; "
+                "billing; insurance; high or urgent priority; confusion, complaint, or escalation; "
+                "or any clinical or operational follow-up. "
                 "When in doubt, set to false."
             ),
         },
