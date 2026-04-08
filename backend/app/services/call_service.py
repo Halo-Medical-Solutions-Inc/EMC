@@ -42,6 +42,7 @@ async def find_completed_calls_by_number(
             Call.deleted_at.is_(None),
             Call.created_at >= cutoff,
         )
+        .order_by(Call.created_at.desc())
         .limit(1)
     )
     result = await db.execute(query)
