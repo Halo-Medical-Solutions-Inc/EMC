@@ -41,7 +41,6 @@ class Settings(BaseSettings):
 
     SLACK_BOT_TOKEN: str = ""
     SLACK_SUPPORT_CHANNEL_ID: str = ""
-    INTERNAL_CALL_COMMENT_NOTIFY_EMAIL: str = ""
     SLACK_INTERNAL_CALL_MENTION_USER_ID: str = ""
 
     @property

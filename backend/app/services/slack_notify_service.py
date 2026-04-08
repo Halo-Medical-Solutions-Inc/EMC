@@ -8,8 +8,9 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.models.comment_mention import CommentMention
 from app.models.user import User
+
+INTERNAL_CALL_COMMENT_NOTIFY_EMAIL: str = "mandika@halohealth.app"
 
 
 def _preview_text(content: str, max_len: int) -> str:
@@ -141,35 +142,18 @@ def _call_comment_slack_text(
 async def maybe_notify_internal_call_comment_slack(
     db: AsyncSession,
     call_id: uuid.UUID,
-    comment_id: uuid.UUID,
     author_id: uuid.UUID,
     content: str,
     at_mentioned_user_ids: List[uuid.UUID],
 ) -> None:
-    email = settings.INTERNAL_CALL_COMMENT_NOTIFY_EMAIL.strip().lower()
-    if not email:
-        return
-
+    email = INTERNAL_CALL_COMMENT_NOTIFY_EMAIL.strip().lower()
     result = await db.execute(select(User).where(func.lower(User.email) == email))
     target = result.scalar_one_or_none()
     if target is None:
         return
 
-    if author_id == target.id:
+    if target.id not in at_mentioned_user_ids:
         return
-
-    is_direct = target.id in at_mentioned_user_ids
-    if not is_direct:
-        prior = await db.execute(
-            select(CommentMention.id).where(
-                CommentMention.call_id == call_id,
-                CommentMention.user_id == target.id,
-                CommentMention.source == "call_comment",
-                CommentMention.comment_id != comment_id,
-            ).limit(1)
-        )
-        if prior.scalar_one_or_none() is None:
-            return
 
     author = await db.get(User, author_id)
     author_name = author.full_name if author else "Someone"

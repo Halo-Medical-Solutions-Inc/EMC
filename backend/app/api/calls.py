@@ -202,7 +202,6 @@ async def add_call_comment(
         await slack_notify_service.maybe_notify_internal_call_comment_slack(
             db=db,
             call_id=call_id,
-            comment_id=comment.id,
             author_id=current_user.id,
             content=comment.content,
             at_mentioned_user_ids=at_mentioned_ids,
