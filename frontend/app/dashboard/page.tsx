@@ -17,6 +17,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import apiClient from "@/lib/api-client";
 import { localDateToUtcEndOfDay, localDateToUtcStartOfDay } from "@/lib/date-utils";
@@ -73,6 +80,7 @@ function DashboardContent() {
   const [addTabPopoverOpen, setAddTabPopoverOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [reviewFilter, setReviewFilter] = useState<string>("needs_reviewed");
+  const [intentFilter, setIntentFilter] = useState<string>("all");
   const [hasSetDefaultTabs, setHasSetDefaultTabs] = useState(false);
   const callRowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
 
@@ -108,6 +116,7 @@ function DashboardContent() {
 
   useEffect(() => {
     setReviewFilter("needs_reviewed");
+    setIntentFilter("all");
   }, [activeTab]);
 
   useEffect(() => {
@@ -378,9 +387,40 @@ function DashboardContent() {
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
+  const intentCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const call of filteredCalls) {
+      const intent = call.display_data?.primary_intent || "Not Provided";
+      counts.set(intent, (counts.get(intent) || 0) + 1);
+    }
+    return counts;
+  }, [filteredCalls]);
+
+  const extraIntentLabels = useMemo(() => {
+    const known = new Set(INTENT_ORDER);
+    const extras: string[] = [];
+    for (const intent of intentCounts.keys()) {
+      if (!known.has(intent)) {
+        extras.push(intent);
+      }
+    }
+    extras.sort();
+    return extras;
+  }, [intentCounts]);
+
+  const intentFilteredCalls = useMemo(() => {
+    if (intentFilter === "all") {
+      return filteredCalls;
+    }
+    return filteredCalls.filter(
+      (call) =>
+        (call.display_data?.primary_intent || "Not Provided") === intentFilter
+    );
+  }, [filteredCalls, intentFilter]);
+
   const intentGroups = useMemo(() => {
     const groups: Map<string, Call[]> = new Map();
-    for (const call of filteredCalls) {
+    for (const call of intentFilteredCalls) {
       const intent = call.display_data?.primary_intent || "Not Provided";
       if (!groups.has(intent)) {
         groups.set(intent, []);
@@ -403,12 +443,14 @@ function DashboardContent() {
     }
 
     return ordered;
-  }, [filteredCalls]);
+  }, [intentFilteredCalls]);
 
   const orderedCalls = useMemo(() => {
-    if (activeTab === "all") return filteredCalls;
+    if (activeTab === "all") {
+      return intentFilteredCalls;
+    }
     return intentGroups.flatMap((group) => group.calls);
-  }, [activeTab, filteredCalls, intentGroups]);
+  }, [activeTab, intentFilteredCalls, intentGroups]);
 
   const visibleCallsRef = useRef(orderedCalls);
   visibleCallsRef.current = orderedCalls;
@@ -813,6 +855,35 @@ function DashboardContent() {
             </div>
           </div>
 
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+            <span className="text-[13px] font-medium text-neutral-600 shrink-0">
+              Intent
+            </span>
+            <Select value={intentFilter} onValueChange={setIntentFilter}>
+              <SelectTrigger
+                size="sm"
+                className="h-8 w-full border-neutral-200 bg-white text-neutral-900 md:h-9 sm:max-w-md"
+              >
+                <SelectValue placeholder="All intents" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  All intents ({filteredCalls.length})
+                </SelectItem>
+                {INTENT_ORDER.map((intent) => (
+                  <SelectItem key={intent} value={intent}>
+                    {intent} ({intentCounts.get(intent) ?? 0})
+                  </SelectItem>
+                ))}
+                {extraIntentLabels.map((intent) => (
+                  <SelectItem key={intent} value={intent}>
+                    {intent} ({intentCounts.get(intent) ?? 0})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24">
               <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
@@ -827,9 +898,18 @@ function DashboardContent() {
                 Calls will appear here as they come in
               </p>
             </div>
+          ) : intentFilteredCalls.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-sm font-medium text-neutral-900">
+                No calls for this intent
+              </p>
+              <p className="mt-1 text-sm text-neutral-500">
+                Choose another intent or select &quot;All intents&quot;
+              </p>
+            </div>
           ) : activeTab === "all" ? (
             <CallsTable
-              calls={filteredCalls}
+              calls={intentFilteredCalls}
               onSelectCall={handleSelectCall}
               loading={false}
               onToggleReview={handleToggleReview}
