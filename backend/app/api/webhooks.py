@@ -5,13 +5,18 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, Request
 
 from app.utils.business_hours import is_off_hours
+from app.utils.phone import is_practice_main_line_caller
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database.session import get_db
 from app.models.call import CallStatus
-from app.prompts import BASE_KAITLIN_PROMPT, build_returning_caller_prompt
+from app.prompts import (
+    BASE_KAITLIN_PROMPT,
+    MAIN_LINE_CALLER_ID_ADDENDUM,
+    build_returning_caller_prompt,
+)
 from app.services import (
     call_completion_service,
     call_service,
@@ -116,14 +121,14 @@ def _build_model_override(prompt: str) -> Dict[str, Any]:
 async def _handle_assistant_request(
     db: AsyncSession, body: Dict[str, Any]
 ) -> Dict[str, Any]:
-    overrides: Dict[str, Any] = {
-        "model": _build_model_override(BASE_KAITLIN_PROMPT),
-    }
+    call_data = (body.get("message") or {}).get("call") or {}
+    customer = call_data.get("customer") or {}
+    caller_phone = customer.get("number") or ""
+
+    prompt = BASE_KAITLIN_PROMPT
+    first_message: str | None = None
 
     try:
-        call_data = body.get("message", {}).get("call", {})
-        caller_phone = call_data.get("customer", {}).get("number", "")
-
         if caller_phone:
             previous_calls = await call_service.find_completed_calls_by_number(
                 db, caller_phone
@@ -132,14 +137,22 @@ async def _handle_assistant_request(
                 display_data = call_service.decrypt_display_data(previous_calls[0])
                 summary = (display_data or {}).get("summary", "")
                 prompt = build_returning_caller_prompt(summary)
-                overrides["firstMessage"] = (
+                first_message = (
                     "Hello, you've reached Eye Medical Center of Fresno. "
                     "Welcome back — are you calling about the same thing as before, "
                     "or is this something new?"
                 )
-                overrides["model"] = _build_model_override(prompt)
     except Exception as e:
         print(f"Error in assistant-request lookup: {e}")
+
+    if caller_phone and is_practice_main_line_caller(caller_phone):
+        prompt = prompt + MAIN_LINE_CALLER_ID_ADDENDUM
+
+    overrides: Dict[str, Any] = {
+        "model": _build_model_override(prompt),
+    }
+    if first_message is not None:
+        overrides["firstMessage"] = first_message
 
     return {
         "assistantId": settings.VAPI_ASSISTANT_ID,

@@ -779,6 +779,17 @@ Then transfer to the scheduling queue (ext. 1000 English / ext. 1002 Spanish).
 Two attempts maximum at the start of the call (the initial ask + one clarification), then transfer. Do not loop.
 """
 
+MAIN_LINE_CALLER_ID_ADDENDUM: str = """
+
+MAIN LINE CALLER ID
+
+The caller's number is showing as the practice main line, (559) 486-5000. That Caller ID is not a patient's personal phone.
+
+If the caller is a patient, or is calling on behalf of a patient about that patient's care, ask what the best callback number is so the team can reach them (for example, "What's the best number for our team to reach you at?"). Do not treat the displayed caller number as their callback number and do not only ask whether the number they're calling from is best — you need their real callback number in your own words.
+
+For internal staff transfers, other medical offices or hospitals, or administrative calls with no patient callback needed, follow the normal rules without applying the extra callback question solely because of this Caller ID.
+"""
+
 
 def build_returning_caller_prompt(previous_call_summary: str) -> str:
     preamble: str = RETURNING_CALLER_PREAMBLE.replace(
