@@ -15,6 +15,7 @@ from app.models.call import CallStatus
 from app.prompts import (
     BASE_KAITLIN_PROMPT,
     MAIN_LINE_CALLER_ID_ADDENDUM,
+    STANDARD_OPENING_FIRST_MESSAGE,
     build_returning_caller_prompt,
 )
 from app.services import (
@@ -128,8 +129,12 @@ async def _handle_assistant_request(
     prompt = BASE_KAITLIN_PROMPT
     first_message: str | None = None
 
+    skip_returning_caller_lookup = bool(caller_phone) and is_practice_main_line_caller(
+        caller_phone
+    )
+
     try:
-        if caller_phone:
+        if caller_phone and not skip_returning_caller_lookup:
             previous_calls = await call_service.find_completed_calls_by_number(
                 db, caller_phone
             )
@@ -144,6 +149,9 @@ async def _handle_assistant_request(
                 )
     except Exception as e:
         print(f"Error in assistant-request lookup: {e}")
+
+    if skip_returning_caller_lookup:
+        first_message = STANDARD_OPENING_FIRST_MESSAGE
 
     if caller_phone and is_practice_main_line_caller(caller_phone):
         prompt = prompt + MAIN_LINE_CALLER_ID_ADDENDUM

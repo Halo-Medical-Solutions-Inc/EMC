@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import select
@@ -9,6 +9,7 @@ from sqlalchemy.orm import load_only
 
 from app.models.call import Call, CallStatus, ExtractionStatus
 from app.schemas.call import CallSearchRequest, CallSearchResultItem
+from app.utils.business_hours import returning_caller_lookup_cutoff_utc
 from app.utils.encryption import decrypt_for_display, encrypt_for_storage
 
 
@@ -26,13 +27,11 @@ async def create_call(
     return call
 
 
-async def find_completed_calls_by_number(
-    db: AsyncSession, number: str, within_hours: int = 24
-) -> List[Call]:
+async def find_completed_calls_by_number(db: AsyncSession, number: str) -> List[Call]:
     if not number or not number.strip():
         return []
 
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=within_hours)
+    cutoff = returning_caller_lookup_cutoff_utc()
 
     query = (
         select(Call)
