@@ -191,7 +191,10 @@ def build_extraction_schema(
                 "The practice name is Eye Medical Center of Fresno — always use this exact name, "
                 "never a transcription variant like 'iMedical' or 'I Medical.' "
                 "Use the correct provider name from the schema (not transcript typos). "
-                f"Available providers: {provider_names_str}."
+                f"Available providers: {provider_names_str}. "
+                "If the caller clearly states a best callback, mobile, or alternate number to reach them, "
+                "include it at the end of the summary when you can tell it from the transcript; "
+                "do not invent a number."
             ),
         },
         {

@@ -49,6 +49,7 @@ The following JSON schema defines the fields you must extract from this call:
 5. For enum fields, select from the provided options only
 6. If a value cannot be determined from the call, use null
 7. Be accurate - only extract information that is clearly present in the transcript
+8. **Summary — callback number:** Callers sometimes give a best number to reach them, a cell phone, or an alternate callback that is not the Caller ID. When the transcript clearly includes that, do your best to add it at the **end** of the summary (short phrase or digits as spoken). If no number was given or it is too unclear, do not invent one — end the summary without it.
 
 **Handling transcription errors:** Call transcripts often contain typos, misheard names, or phonetic spellings produced by the speech-to-text transcriber. The practice name is **Eye Medical Center of Fresno** — always use this exact name in the summary and all fields, never a transcription variant like "iMedical," "I Medical Center," or similar. Apply the following corrections:
 
