@@ -32,15 +32,34 @@ _TEAMS_FIELD_SUFFIX = (
 )
 
 
-def _call_teams_field_description(team_names_str: str) -> str:
-    return (
+def _call_teams_field_description(
+    team_names: List[str],
+    team_title_to_description: Optional[Dict[str, str]] = None,
+) -> str:
+    team_names_str = ", ".join(team_names)
+    base = (
         "All teams this call is associated with. "
         "A call can belong to multiple teams. "
         "Select all that apply based on the call content, provider, and context. "
         "Infer the best match from available teams even when transcript has errors. "
         f"Available teams: {team_names_str}. "
-        + _TEAMS_FIELD_SUFFIX
     )
+    if team_title_to_description:
+        parts: List[str] = []
+        for title in team_names:
+            desc = (team_title_to_description.get(title) or "").strip()
+            if desc:
+                parts.append(f"{title}: {desc}")
+        if parts:
+            return (
+                base
+                + "Use these definitions to route the call: "
+                + " ".join(parts)
+                + " "
+                "If more than one definition applies, include every matching team. "
+                "If the main follow-up owner is unclear, pick the team that would handle the primary action."
+            )
+    return base + _TEAMS_FIELD_SUFFIX
 
 
 def build_staff_extension_map(
@@ -97,6 +116,7 @@ def _build_priority_description(custom: Optional[Dict[str, str]] = None) -> str:
 def build_extraction_schema(
     provider_names: List[str],
     team_names: Optional[List[str]] = None,
+    team_title_to_description: Optional[Dict[str, str]] = None,
     staff_extension_map: Optional[str] = None,
     priority_descriptions: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
@@ -220,8 +240,9 @@ def build_extraction_schema(
     ]
 
     if team_names:
-        team_names_str = ", ".join(team_names)
-        teams_description = _call_teams_field_description(team_names_str)
+        teams_description = _call_teams_field_description(
+            team_names, team_title_to_description
+        )
         if staff_extension_map:
             teams_description += (
                 " When the caller mentions a staff name or extension number, "
