@@ -5,10 +5,11 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import get_current_user
+from app.api.dependencies import get_current_user, require_admin
 from app.database.session import get_db
 from app.models.user import User
 from app.services import call_service
+from app.services.analytics_report_service import AnalyticsReportService
 from app.services.analytics_service import get_analytics, get_sankey_calls
 from app.utils.errors import AppError
 
@@ -71,9 +72,9 @@ def _build_call_responses(calls: list) -> List[Dict[str, Any]]:
                 "display_data": display_data,
                 "vapi_data": vapi_data,
                 "extraction_data": extraction_data,
-                "extraction_status": call.extraction_status.value
-                if call.extraction_status
-                else None,
+                "extraction_status": (
+                    call.extraction_status.value if call.extraction_status else None
+                ),
             }
         )
     return results
@@ -116,4 +117,27 @@ async def get_analytics_calls(
         "success": True,
         "data": call_responses,
         "message": None,
+    }
+
+
+@router.post("/analytics/report/test")
+async def send_test_analytics_report(
+    _current_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> Dict[str, Any]:
+    report_service = AnalyticsReportService(db)
+    result = await report_service.send_test_month_to_date_report()
+    return {
+        "success": True,
+        "data": {
+            "recipients": result.recipients,
+            "cc_recipients": result.cc_recipients,
+            "subject": result.subject,
+            "filename": result.filename,
+            "start_datetime": result.start_datetime,
+            "end_datetime": result.end_datetime,
+            "timezone": result.timezone,
+            "total_calls": result.total_calls,
+        },
+        "message": "Analytics report email sent",
     }

@@ -1,4 +1,5 @@
 from app.services import audit_service
+from app.services import analytics_report_service
 from app.services import call_completion_service
 from app.services import call_service
 from app.services import email_service
@@ -14,6 +15,7 @@ from app.services import vapi_service
 
 __all__ = [
     "audit_service",
+    "analytics_report_service",
     "call_completion_service",
     "call_service",
     "email_service",

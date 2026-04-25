@@ -7,9 +7,22 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import analytics, auth, audit_logs, calls, invitations, mentions, messaging, practice, users, webhooks, websocket
+from app.api import (
+    analytics,
+    auth,
+    audit_logs,
+    calls,
+    invitations,
+    mentions,
+    messaging,
+    practice,
+    users,
+    webhooks,
+    websocket,
+)
 from app.config import settings
 from app.database.redis_client import close_redis, get_redis
+from app.services.analytics_report_service import run_monthly_analytics_report_loop
 from app.services.publisher_service import CHANNEL_NAME
 from app.services.stale_call_service import run_stale_call_recovery_loop
 from app.utils.errors import AppError
@@ -43,6 +56,7 @@ async def redis_subscriber() -> None:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     subscriber_task = asyncio.create_task(redis_subscriber())
     stale_recovery_task = asyncio.create_task(run_stale_call_recovery_loop())
+    monthly_report_task = asyncio.create_task(run_monthly_analytics_report_loop())
 
     print("AI Receptionist backend started")
 
@@ -50,6 +64,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     subscriber_task.cancel()
     stale_recovery_task.cancel()
+    monthly_report_task.cancel()
 
     try:
         await subscriber_task
@@ -58,6 +73,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     try:
         await stale_recovery_task
+    except asyncio.CancelledError:
+        pass
+
+    try:
+        await monthly_report_task
     except asyncio.CancelledError:
         pass
 
